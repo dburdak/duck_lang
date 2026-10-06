@@ -1,0 +1,25 @@
+program ::= { statement } finish
+
+finish ::= "finish" operand
+
+statement ::= var_decl | assignment | if | while
+
+var_decl ::= ( "🍃" | "🪨" ) ident ":" type "<-" expr ";"
+
+assignment ::= ident "<-" expr ";"
+
+if ::= "🐤" expr block [ "🦢" block ]
+
+while ::= "waddle" expr block
+
+block ::= "🪶" statement { statement } "🪽"
+
+type ::= "🐥" | "🦆" | "🥚"
+
+operand ::= ident | number | "🪺" | "🪹" | "(" expr ")"
+
+expr ::= arith [ ( "≡" | "≢" ) arith ]
+
+arith ::= term { ("+" | "-") term }
+
+term ::= operand { ( "*" | "/" ) operand }
