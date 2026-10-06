@@ -12,7 +12,8 @@ if ::= "🐤" expr block [ "🦢" block ]
 
 while ::= "waddle" expr block
 
-block      ::= "🪶" block_item { block_item } "🪽"
+block ::= "🪶" block_item { block_item } "🪽"
+
 block_item ::= statement | finish
 
 type ::= "🐥" | "🦆" | "🥚"
