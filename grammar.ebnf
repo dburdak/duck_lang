@@ -1,6 +1,6 @@
 program ::= { statement } finish
 
-finish ::= "finish" operand
+finish ::= "finish" operand ";"
 
 statement ::= var_decl | assignment | if | while
 
