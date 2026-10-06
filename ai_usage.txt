@@ -1,0 +1,1231 @@
+Створення качиної мови програмування
+https://gemini.google.com/app/b6d091ab9958c696
+
+User prompt: Мені треба для навчання створити свою мову програмування. Мені б хотілось щоб вона теж була побудована на елементарних частинках з яких можна збудувати складні речі через рекурсію та групування. Але також хочеться щоб це було щось прикольне та веселе. Думала про качок , про якісь прикольні каламбури в англійській замість ключових слів, але нічого цікавого не придумала
+Response: Концепція качиної мови на основі мінімальних елементарних частинок (як у Pure Lisp або Lambda Calculus) ідеально підходить для розробки інтерпретатора. Оскільки Lisp базується лише на списку, кількох примітивах і рекурсії, його можна перетворити на PondLang (або DuckLisp).
+1. PondLang: Гомоіконічна «качина» мова
+Всі дані та код у мові є «гніздами» (списками) або «качками» (атомами). Ви будуєте будь-яку складну логіку з 6-7 елементарних примітивів.
+Елементарні частинки (Primitives)
+
+Примітив
+Аналог у Lisp/Scheme
+Опис
+[ a b c ]
+(list a b c)
+Nest (Гніздо): Базове групування та структура даних
+duck
+lambda
+Створює анонімну функцію
+hatch
+cons
+«Висиджує» елемент (додає елемент у початок гнізда)
+beak
+car / head
+Повертає «дзьоб» (перший елемент гнізда)
+tail
+cdr / tail
+Повертає «хвіст» (все, крім першого елемента)
+peck
+if / cond
+«Дзьобає» умову: якщо перше значення істинне, виконує другу гілку
+quack
+print / eval
+Обчислює вираз або виводить його
+waddle
+recur
+Рекурсивний виклик поточної функції
+
+2. Англійські каламбури та птице-терміни
+Замість нудних системних слів можна використати англійські каламбури для синтаксису, операторів та помилок:
+Деларація та зв'язування:
+drake замість let / const (селезень утримує значення).
+duck замість fn / def.
+ducking — каррування (currying) або часткове застосування функції.
+Керування потоком та типи:
+peck або waddle_if замість if.
+im-peck-able — значення true або метод assert.
+duck_type — оператор перевірки типу (typeof).
+Модулі та пайплайни:
+breadcrumbs (~>) — пайплайн-оператор для передачі даних між функціями (качка іде по крихтах).
+migration — оператор import / export для підключення інших файлів.
+Системні помилки:
+QuackOverflowError — помилка переповнення стеку при нескінченній рекурсії.
+LameDuckException — помилка типу або неочікуваний null.
+3. Приклади коду
+Обчислення факторіалу (Рекурсія + Групування)
+# Визначення функції factorial
+drake factorial (duck [n]
+  (peck (= n 0)
+    1
+    (* n (waddle (- n 1)))))  # waddle здійснює рекурсивний виклик
+
+# Виклики та друк
+quack (factorial 5)  # Виведе 120
+
+
+Обробка списків через дзьоб і хвіст (beak & tail)
+Функція sum, яка рекурсивно сумує всі елементи гнізда:
+drake sum (duck [nest_of_numbers]
+  (peck (empty? nest_of_numbers)
+    0
+    (+ (beak nest_of_numbers) 
+       (waddle (tail nest_of_numbers)))))
+
+quack (sum [10 20 30 40])  # Повертає 100
+
+
+Каскадний пайплайн через хлібні крихти (~>)
+drake double (duck [x] (* x 2))
+drake add_five (duck [x] (+ x 5))
+
+# Передаємо 10 через ланцюжок функцій
+10 ~> double ~> add_five ~> quack  # Виведе 25
+
+
+4. Ще більш радикальний варіант: Duck Combinators
+Якщо хочеться зробити мову концептуально мінімалістичною (на зразок SKI-комбінаторного числення), можна створити мову, де взагалі немає змінних, а є лише три качки-комбінатори:
+Mallard (I-комбінатор): Повертає те, що отримав (Mallard x) => x.
+Drake (K-комбінатор): Повертає першу качку і ігнорує другу (Drake x y) => x.
+Goose (S-комбінатор): Передає аргументи далі (Goose x y z) => (x z (y z)).
+З комбінації цих трьох качок можна вибудувати будь-яку обчислювану функцію, арифметику Черча та рекурсію без жодного if чи while.
+
+User prompt: Це супер, але хіба ця мовп підійде для цього завдання:
+Response: Ні, у тому вигляді, в якому вона була описана (як Pure Lisp / Scheme), вона не підійде без істотних змін.
+Попередня концепція була чисто функціональною, де все є виразом. Натомість ТЗ вашого проєкту вимагає імперативної структури з чітким поділом на стейтменти (StmtNode) та вирази (ExprNode), явними типами, присвоєнням та конкретною формою if/else.
+Але ідею з качками та каламбурами можна зберегти на 100%, просто переклавши її на класичну імперативну синтаксичну модель. ТЗ прямо заохочує використання емоджі або унікального синтаксису (це чудова перевірка для вашого байтового лексера, адже один UTF-8 емоджі — це 3-4 байти в автоматі).
+Чеклист вимог ТЗ vs Качина мова (QuackLang / PondLang)
+
+Вимога з ТЗ
+Стандартний аналог
+Качина адаптація (Text)
+Качина адаптація (Emoji / Puns)
+Integer 1 (32-bit)
+i32
+duck32
+🐥
+Integer 2 (64-bit)
+i64
+duck64
+🦆
+Boolean type
+bool
+pond_bool
+🥚
+Boolean values
+true / false
+quack / silence
+🔊 / 🔇
+Mutable variable
+let / var
+hatch
+🐣
+Constant (immutable)
+const
+egg
+🪺
+Assignment
+=
+= (або <-)
+=
+Comparison
+==, !=
+==, !=
+==, !=
+If / Else
+if ... else ...
+peckExpr { ... } flap { ... }
+🦆Expr { ... } 🪶 { ... }
+
+Приклад валидного коду на QuackLang
+Цей приклад повністю відповідає структурі AST та вимогам ТЗ (присвоєння, константи, мутабельні змінні, два типи int, bool, if/else з блоками {}):
+Варіант А: Текстові каламбури (Англійська)
+# Константа та мутабельні змінні
+egg MAX_LIMIT: duck64 = 1000000;
+hatch counter: duck32 = 0;
+hatch is_ready: pond_bool = silence;
+
+# Assignment & Arithmetic
+counter = 42;
+
+# Required if/else statement construct: if boolExpr { stmt+ } else { stmt+ }
+peck (counter == 42) {
+    is_ready = quack;
+    counter = counter + 1;
+} flap {
+    is_ready = silence;
+}
+
+
+Варіант Б: Емоджі-синтаксис (Рекомендація з Task 2)
+🪺 MAX_LIMIT: 🦆 = 1000000;
+🐣 counter: 🐥 = 0;
+🐣 is_ready: 🥚 = 🔇;
+
+counter = 42;
+
+🦆 (counter != 0) {
+    is_ready = 🔊;
+    counter = counter + 1;
+} 🪶 {
+    is_ready = 🔇;
+}
+
+
+Чернетка EBNF для grammar.ebnf (Task 2)
+Оскільки рекурсивний спуск (Recursive Descent Parser) вимагає чітких правил граматики без лівої рекурсії, EBNF для цієї мови буде виглядати так:
+Program         ::= Statement* ;
+
+Statement       ::= VarDeclStmt
+                  | AssignStmt
+                  | IfStmt ;
+
+VarDeclStmt     ::= ("hatch" | "egg") IDENTIFIER ":" Type "=" Expression ";" ;
+AssignStmt      ::= IDENTIFIER "=" Expression ";" ;
+
+IfStmt          ::= "peck" Expression "{" Statement+ "}" [ "flap" "{" Statement+ "}" ] ;
+
+Type            ::= "duck32" | "duck64" | "pond_bool" ;
+
+Expression      ::= EqualityExpr ;
+EqualityExpr    ::= AddExpr { ("==" | "!=") AddExpr } ;
+AddExpr         ::= PrimaryExpr { ("+" | "-") PrimaryExpr } ;
+PrimaryExpr     ::= IDENTIFIER | INT_LITERAL | "quack" | "silence" | "(" Expression ")" ;
+
+
+Чому такий підхід ідеально підходить для Stage 1?
+Легко побудувати AST Hierarchy (Task 4):
+StmtNode → VarDeclNode, AssignNode, IfNode
+ExprNode → BinaryOpNode, LiteralNode, VarRefNode
+Зручно реалізувати ручний лексер (Task 4): Скінченний автомат за байтами простіше відлагоджувати, коли є чіткі токени (IDENTIFIER, NUMBER, PECK, FLAP, LBRACE, RBRACE).
+Емоджі чудово покривають вимогу креативності: Якщо оберете варіант з емоджі (наприклад, 🦆 замість peck), ваш лексер читатиме послідовність байтів 0xF0 0x9F 0xA6 0x86 як один токен TOKEN_IF.
+
+User prompt: а є якась таблиця з байтами та емоці які вони означають?
+Response: Оскільки у UTF-8 емоджі займають від 3 до 4 байтів, для зчитування їх байтовим автометом (State Machine) у лексері зручно мати пряме значення кожного байта в шестнадцятковій (0x..) та десятковій системах:
+
+Емоджі
+Назва
+Code Point
+UTF-8 Hex Bytes
+UTF-8 Dec Bytes
+Роль у мові (приклад)
+🦆
+Duck
+U+1F986
+0xF0 0x9F 0xA6 0x86
+240 159 166 134
+if / Ключове слово
+🪶
+Feather
+U+1FAB6
+0xF0 0x9F 0xAA 0xB6
+240 159 170 182
+else / Гілка
+🐣
+Hatching Chick
+U+1F425
+0xF0 0x9F 0x90 0xA5
+240 159 144 165
+let (мутабельна)
+🪺
+Nest with Eggs
+U+1FABA
+0xF0 0x9F 0xAA 0xBA
+240 159 170 186
+const (іммутабельна)
+🐥
+Baby Chick
+U+1F424
+0xF0 0x9F 0x90 0xA4
+240 159 144 164
+i32 тип
+🦆
+Duck (i64)
+U+1F986
+0xF0 0x9F 0xA6 0x86
+240 159 166 134
+i64 тип
+🥚
+Egg
+U+1F95A
+0xF0 0x9F 0xA5 0x9A
+240 159 165 154
+bool тип
+🔊
+Loud Speaker
+U+1F50A
+0xF0 0x9F 0x94 0x8A
+240 159 148 138
+true
+🔇
+Muted Speaker
+U+1F507
+0xF0 0x9F 0x94 0x87
+240 159 148 135
+false
+🌊
+Water Wave
+U+1F30A
+0xF0 0x9F 0x8C 0x8A
+240 159 140 138
+return / quack
+
+Як влаштований 4-байтовий UTF-8 автомат
+Майже всі сучасні емоджі належать до діапазону U+10000..U+10FFFF, тому в UTF-8 вони завжди кодуються 4 байтами:
+Байт 1: 0xF0 (11110000 в двійковій) — сигналізує лексеру, що це початок 4-байтового UTF-8 символу.
+Байт 2: 0x9F або 0x8F..0xBF (10xxxxxx) — продовження.
+Байт 3: 0x80..0xBF (10xxxxxx) — продовження.
+Байт 4: 0x80..0xBF (10xxxxxx) — фінальний байт.
+Як швидко дізнатися байти будь-якого емоджі
+Якщо ви захочете додати інші емоджі у граматику, їхні байти можна миттєво отримати через короткий Python-скрипт під час розробки лексера:
+emoji = "🦆"
+utf8_bytes = emoji.encode("utf-8")
+
+print("Hex:", " ".join(f"0x{b:02X}" for b in utf8_bytes))
+print("Dec:", " ".join(str(b) for b in utf8_bytes))
+# Виведе:
+# Hex: 0xF0 0x9F 0xA6 0x86
+# Dec: 240 159 166 134
+
+
+У самому автоматі станів лексера стан буде переходити так: STATE_START 0xF0​ STATE_EMOJI_1 0x9F​ STATE_EMOJI_2 0xA6​ STATE_EMOJI_3 0x86​ TOKEN_IF.
+
+User prompt: давай ще зробимо щоб hatch був варіант емодзі для мутабельної та незмінної змінної, якісь дві протилежності. типу каченя що вилупилось без кришки на голові та з нею.
+Response: Це просто ідеальна ідея! В Юнікоді вже є два сусідніх емоджі, які точно відповідають цьому опису:
+🐣 Hatching Chick (U+1F425) — каченя/курча, яке щойно вилуплюється і має шкаралупу («кришечку») на голові.
+🐥 Baby Chick (U+1F424) — каченя/курча, яке повністю вилупилося і стоїть без шкаралупи.
+Концептуальний метафоризм
+Ви можете обрати будь-яку з двох логік:
+Варіант 1: Шкаралупа як захист (Рекомендовано)
+🐣 (Hatching Chick, зі шкаралупою) → const (незмінна змінна). Шкаралупа «захищає» значення від змін, воно зафіксоване й закрите.
+🐥 (Baby Chick, без шкаралупи) → let / var (мутабельна змінна). Каченя вільне від шкаралупи, тому може рости, рухатися і змінювати свій стан.
+Варіант 2: Динаміка вилуплення
+🐣 (процес вилуплення) → let (мутабельна) — значення ще змінюється і формується.
+🐥 (готове каченя) → const (незмінна) — процес завершено, стан остаточний.
+Технічна краса для вашого лексера
+З точки зору компілятора та байтового автомата, це найкращий вибір, який тільки можна зробити. Подивіться на їхні UTF-8 байти:
+
+Емоджі
+Назва
+Code Point
+UTF-8 Hex Bytes
+UTF-8 Dec Bytes
+🐥
+Baby Chick (без шкаралупи)
+U+1F424
+0xF0 0x9F 0x90 0xA4
+240 159 144 164
+🐣
+Hatching Chick (зі шкаралупою)
+U+1F425
+0xF0 0x9F 0x90 0xA5
+240 159 144 165
+
+Зверніть увагу: перші 3 байти (0xF0 0x9F 0x90) у них абсолютно однакові! Вони відрізняються лише останнім бітом фінального байта: 0xA4 проти 0xA5.
+В автоматі станів вашого лексера це обробляється дуже елегантно:
+STATE_START 
+   ├─> 0xF0 ─> STATE_EMOJI_F0
+                   └─> 0x9F ─> STATE_EMOJI_9F
+                                   └─> 0x90 ─> STATE_CHICK_PREFIX
+                                                   ├─> 0xA4 ─> TOKEN_MUTABLE_VAR   (🐥)
+                                                   └─> 0xA5 ─> TOKEN_IMMUTABLE_VAR (🐣)
+
+
+Оновлений приклад коду мовою PondLang
+# 🐣 (зі шкаралупою) - константа (immutable)
+🐣 MAX_CAPACITY: 🐥 = 100;
+
+# 🐥 (без шкаралупи) - змінна (mutable)
+🐥 current_count: 🐥 = 0;
+
+current_count = current_count + 1;
+
+🦆 (current_count != MAX_CAPACITY) {
+    current_count = current_count + 5;
+} 🪶 {
+    current_count = 0;
+}
+
+
+Оновлений фрагмент EBNF (grammar.ebnf)
+VarDeclStmt ::= ( "🐥" | "🐣" ) IDENTIFIER ":" Type "=" Expression ";" ;
+
+
+Такий контраст виглядає наочно та робить код мови дуже гармонійним.
+
+User prompt: а як ми тоді відобразимо i32 це ж тоді геть інше. які ще є варіанти протилежностей для мутабельної та константної змінної
+Response: Щоб уникнути конфлікту між оголошенням змінних та типами даних, ключові слова для оголошення (let/const) і самі типи (i32/i64) краще розділити за змістовними категоріями.
+1. Реорганізація типів i32 та i64
+Якщо курчат 🐣/🐥 ми залишаємо для оголошення змінних, то для типів чисел ідеально підійде тема водойми/водного об'єму (малий та великий розряд числа):
+
+Тип
+Емоджі
+Код / Опис
+UTF-8 Hex Bytes
+Метафора
+i32
+💧
+Water Drop (U+1F4A7)
+0xF0 0x9F 0x92 0xA7
+Крапля (малий об'єм / 32 біти)
+i64
+🌊
+Water Wave (U+1F30A)
+0xF0 0x9F 0x8C 0x8A
+Хвиля (великий об'єм / 64 біти)
+bool
+🥚
+Egg (U+1F95A)
+0xF0 0x9F 0xA5 0x9A
+Яйце (двійковий стан: вилупиться / ні)
+
+2. Варіанти протилежностей для Мутабельної (let) та Константної (const) змінної
+Якщо варіант із курчатами 🐣/🐥 хочеться замінити або розглянути інші пари, ось найвдаліші варіанти протилежностей у качиній тематиці:
+Варіант А: Гніздо проти Пір'їни (Зафіксованість vs Динаміка)
+🪺 Nest (const): Гніздо прикріплене до місця, значення зафіксоване й не рухається (0xF0 0x9F 0xAA 0xBA).
+🪶 Feather (let): Пір'їнка легка, летить за вітром і постійно змінює напрямок (0xF0 0x9F 0xAA 0xB6).
+Варіант Б: Лід проти Води (Стани речовини у ставку)
+🧊 Ice (const): Замерзла вода у ставку — твердий, незмінний стан (0xF0 0x9F 0xA7 0x8A).
+🌊 Wave (let): Плинна рідка вода — постійно рухається та змінює форму (0xF0 0x9F 0x8C 0x8A).
+Варіант В: Зачинено проти Відчинено
+🔒 Locked Egg / Lock (const): Константа заблокована від запису (0xF0 0x9F 0x94 0x92).
+🔓 Unlocked / Key (let): Значення відкрите для перевизначення (0xF0 0x9F 0x94 0x93).
+Приклад збалансованого синтаксису (Варіант А + Вода)
+З такою комбінацією синтаксис стає інтуїтивним і не плутає символи:
+# 🪺 (const) | 💧 (i32)
+🪺 MAX_USERS: 💧 = 100;
+
+# 🪶 (let)   | 🌊 (i64)
+🪶 total_clicks: 🌊 = 0;
+
+total_clicks = total_clicks + 1;
+
+🦆 (total_clicks != MAX_USERS) {
+    total_clicks = total_clicks + 10;
+} 🪶 {
+    total_clicks = 0;
+}
+
+
+
+User prompt: ні, мені подобається каченя в ролі i32
+Response: Чудова ідея! Якщо 🐥 (Baby Chick) — це i32 (маленьке каченя = менший розмір числа), то система типів і змінних вибудовується надзвичайно логічно через вікову метафору для типів та фізичні протилежності для змінних.
+1. Система типів (Вікова / Розмірна метафора)
+
+Тип
+Емоджі
+Назва
+Метафора
+UTF-8 Hex Bytes
+i32
+🐥
+Baby Chick (U+1F424)
+Маленьке каченя (32-бітне ціле число)
+0xF0 0x9F 0x90 0xA4
+i64
+🦆
+Duck (U+1F986)
+Доросла качка (64-бітне велике число)
+0xF0 0x9F 0xA6 0x86
+bool
+🥚
+Egg (U+1F95A)
+Яйце (двійковий стан: вилупиться чи ні)
+0xF0 0x9F 0xA5 0x9A
+
+2. Варіанти протилежностей для Мутабельної (let) та Константної (const) змінної
+Оскільки курчат 🐥 ми забрали під тип i32, ось найкрасті пари протилежностей для оголошення змінних:
+Варіант 1: 🪺 Гніздо (const) vs 🪶 Пір'їнка (let) — Найкращий варіант
+🪺 Nest (const): Гніздо міцно збудоване на березі, воно зафіксоване й непорушне (0xF0 0x9F 0xAA 0xBA).
+🪶 Feather (let): Пір'їнка легка, летить за вітром і постійно змінює свій стан та координати (0xF0 0x9F 0xAA 0xB6).
+Варіант 2: 🧊 Крига (const) vs 🌊 Вода (let)
+🧊 Ice (const): Крига на ставку — замерзлий, твердий і незмінний стан (0xF0 0x9F 0xA7 0x8A).
+🌊 Wave (let): Плинна вода — постійно рухається, тече й змінює форму (0xF0 0x9F 0x8C 0x8A).
+Варіант 3: 🪨 Камінь (const) vs 🍃 Листок (let)
+🪨 Stone (const): Важкий камінь на дні ставка, який ніщо не зрушить (0xF0 0x9F 0xA9 0xA8).
+🍃 Leaf (let): Листок, що дрейфує водою та змінює позицію (0xF0 0x9F 0x8D 0x83).
+3. Приклад коду мовою PondLang (Варіант 1)
+У цьому варіанті код виглядає максимально збалансовано, а типи 🐥 та 🦆 чудово виділяються на тлі оголошень:
+# 🪺 (const) | 🐥 (i32)
+🪺 MIN_AGE: 🐥 = 18;
+
+# 🪺 (const) | 🦆 (i64)
+🪺 BIG_MONEY: 🦆 = 1000000000000;
+
+# 🪶 (let) | 🐥 (i32) | 🥚 (bool)
+🪶 current_count: 🐥 = 0;
+🪶 is_active: 🥚 = 🔊;
+
+current_count = current_count + 1;
+
+🦆 (current_count != MIN_AGE) {
+    current_count = current_count + 1;
+} 🪶 {
+    is_active = 🔇;
+}
+
+
+4. Оновлений EBNF фрагмент (grammar.ebnf)
+VarDeclStmt ::= ( "🪺" | "🪶" ) IDENTIFIER ":" Type "=" Expression ";" ;
+Type        ::= "🐥" | "🦆" | "🥚" ;
+
+
+Такий розподіл повністю усуває плутанину: 🪺/🪶 відповідають за поведінку пам'яті (мутабельність), а 🐥/🦆/🥚 — за розмір та тип даних.
+
+User prompt: я хочу замінити булеві операції рівності та нерівності цими, але гугл мені каже що їх наміє в ascii таблиці: ≡ , ≢ 
+Response: Гугл абсолютно правий: у стандартній таблиці ASCII є лише 128 символів (коди від 0 до 127 / 0x00–0x7F), серед яких є лише базові математичні знаки на кшталт =, +, !.
+Символи ≡ (U+2261) та ≢ (U+2262) належать до математичного блоку Unicode.
+Для вашого лабораторного проєкту це не є перешкодою. ТЗ проєкту вимагає, щоб лексер працював як байтовий автомат станів (state machine over bytes). Будь-який Unicode-символ у кодуванні UTF-8 — це просто послідовність із кількох байтів, точно так само, як і емоджі.
+1. UTF-8 байти для ≡ та ≢
+Обидва символи є 3-байтовими послідовностями у UTF-8:
+
+Оператор
+Назва / Опис
+Code Point
+UTF-8 Hex Bytes
+UTF-8 Dec Bytes
+Роль у мові (еквівалент)
+≡
+Identical to
+U+2261
+0xE2 0x89 0xA1
+226 137 161
+== (рівність)
+≢
+Not identical to
+U+2262
+0xE2 0x89 0xA2
+226 137 162
+!= (нерівність)
+
+2. Обробка у байтовому автоматі лексера
+З точки зору автомату ці оператори навіть зручніші за емоджі, оскільки займають 3 байти замість 4, і мають спільний префікс з двох байтів (0xE2 0x89):
+STATE_START 
+   └─> 0xE2 ─> STATE_MATH_PREFIX_1
+                   └─> 0x89 ─> STATE_MATH_PREFIX_2
+                                   ├─> 0xA1 ─> TOKEN_EQ  (≡)
+                                   └─> 0xA2 ─> TOKEN_NEQ (≢)
+
+
+3. Приклад використання у граматиці та коді
+Фрагмент EBNF (grammar.ebnf)
+EqualityExpr ::= AddExpr { ("≡" | "≢") AddExpr } ;
+
+
+Приклад коду мовою PondLang
+🪺 LIMIT: 🐥 = 100;
+🪶 count: 🐥 = 0;
+
+# Використання ≡ та ≢
+🦆 (count ≢ LIMIT) {
+    count = count + 1;
+} 🪶 {
+    🦆 (count ≡ 100) {
+        count = 0;
+    }
+}
+
+
+
+User prompt: зроби з цього нормальну табличку з потрібними емодзі, які я зазначила зліва. Також накидай ідей які існують в інших мовах програмування для цікавих функцій нашої мови що не будуть порушувати або сильно ускладнювати майбутню рекурсивну обробку та генерацію компілятором коду
+Response: Оформлена таблиця елементів мови з урахуванням емоджі та символів з ваших нотаток, а також UTF-8 байтами для зручної реалізації лексера в автоматі:
+
+Вимога з ТЗ
+Стандартний аналог
+Качина адаптація (Text)
+Качина адаптація (Emoji / Symbol)
+UTF-8 Hex Bytes
+Integer (32-bit)
+i32
+duck32
+🐥
+0xF0 0x9F 0x90 0xA4
+Integer (64-bit)
+i64
+duck64
+🦆
+0xF0 0x9F 0xA6 0x86
+Boolean type
+bool
+pond_bool
+🥚
+0xF0 0x9F 0xA5 0x9A
+Boolean values
+true / false
+full / empty (або quack / silence)
+🔊 / 🔇
+0xF0 0x9F 0x94 0x8A / 0xF0 0x9F 0x94 0x87
+Mutable variable
+let / mut
+hatch
+🍃 (або 🪨)
+0xF0 0x9F 0x8D 0x83
+Constant (immutable)
+const
+egg / nest
+🪺
+0xF0 0x9F 0xAA 0xBA
+Assignment
+=
+<-
+<-
+0x3C 0x2D
+Comparison (Equal)
+==
+≡
+≡
+0xE2 0x89 0xA1
+Comparison (Not Eq)
+!=
+≢
+≢
+0xE2 0x89 0xA2
+If / Else
+if ... else ...
+peck ... swan ...
+🐥 ... 🦢 ...
+🐥 (0xF0...), 🦢 (0xF0 0x9F 0xA6 0xA2)
+
+Ідеї цікавих фіч (без ускладнення компілятора)
+Усі наведені фічі зберігають синтаксис LL(1) (зручно для рекурсивного спуску) та генерують простий код в LLVM IR чи C:
+quack / 🔊 (Вбудоване виведення / Print Statement)
+Синтаксис: quack expr; або 🔊 expr;
+Чому це просто для парсера й AST: Окремий PrintStmtNode(expr).
+Чому це просто для кодогенератора: На етапі кодогенерації в LLVM IR це просто виклик стандартного printf("%d\n", val) або puts().
+waddle / 🔁 (Цикл While)
+Синтаксис: waddle (condExpr) { stmt+ }
+Чому це просто для парсера й AST: WhileStmtNode(condition, body). Структура парсингу нічим не відрізняється від вашого if.
+Чому це просто для кодогенератора: В LLVM IR це стандартні 3 базові блоки: loop.cond, loop.body, loop.merge з умовним переходом br.
+breadcrumbs / ~> (Пайплайн-оператор)
+Синтаксис: x ~> double_it;
+Чому це просто для парсера й AST: Це повністю синтаксичний цукор. У рекурсивному спуску при виявленні ~> парсер просто будує вузол виклику функції CallNode(fn=double_it, args=[x]).
+Чому це просто для кодогенератора: Генератор коду взагалі не знає про існування ~>, він бачить звичайний виклик функції.
+overflow_check / 🛡️ (Явний контроль переповнення)
+Синтаксис: safe (expr) або 🛡️ (expr)
+Чому це просто: ТЗ вимагає "type overflow checks". У парсері це OverflowCheckExprNode(expr). В LLVM IR ви використовуєте інтринсіки з автоматичною перевіркою (наприклад, @llvm.sadd.with.overflow.i32), які при прапорці overflow генерують trap / паніку.
+swap / 🔀 (Оператор обміну значень)
+Синтаксис: a 🔀 b;
+Чому це просто: SwapStmtNode(varA, varB). Генерує 3 інструкції завантаження/збереження через тимчасову змінну (tmp = a; a = b; b = tmp;).
+
+User prompt: виправ utf codes бо вони можуть не співпадати для деяких емоджі: Вимога з ТЗСтандартний аналогКачина адаптація (Text)Качина адаптація (Emoji / Symbol)UTF-8 Hex BytesInteger (32-bit)i32duck32🐥0xF0 0x9F 0x90 0xA4Integer (64-bit)i64duck64🦆0xF0 0x9F 0xA6 0x86Boolean typeboolpond_bool🥚0xF0 0x9F 0xA5 0x9ABoolean valuestrue / falsefull / empty (або quack / silence)🪺 / 🪹0xF0 0x9F 0x94 0x8A / 0xF0 0x9F 0x94 0x87Mutable variablemuthatch🍃0xF0 0x9F 0x8D 0x83Constant (immutable)constegg / nest🪨0xF0 0x9F 0xAA 0xBAAssignment=<-<-0x3C 0x2DComparison (Equal)==≡≡0xE2 0x89 0xA1Comparison (Not Eq)!=≢≢0xE2 0x89 0xA2If / Elseif ... else ...peck ... swan ...🐥 <ifExpr> 🪶<body> 🪶🦢 <else expr> 🪶<body>🪶🐥 (0xF0...), 🦢 (0xF0 0x9F 0xA6 0xA2)
+Response: Ось повністю виправлена та перевірена таблиця з точними UTF-8 байтами (у байтовому автоматі лексера кожен емоджі займає рівно 4 байти, а математичні символи — 3 байти):
+
+Вимога з ТЗ
+Стандартний аналог
+Качина адаптація (Text)
+Качина адаптація (Emoji / Symbol)
+Code Point
+UTF-8 Hex Bytes
+Integer (32-bit)
+i32
+duck32
+🐥
+U+1F424
+0xF0 0x9F 0x90 0xA4
+Integer (64-bit)
+i64
+duck64
+🦆
+U+1F986
+0xF0 0x9F 0xA6 0x86
+Boolean type
+bool
+pond_bool
+🥚
+U+1F95A
+0xF0 0x9F 0xA5 0x9A
+Boolean true
+true
+full
+🪺
+U+1FABA
+0xF0 0x9F 0xAA 0xBA
+Boolean false
+false
+empty
+🪹
+U+1FAB9
+0xF0 0x9F 0xAA 0xB9
+Mutable variable
+mut
+hatch
+🍃
+U+1F343
+0xF0 0x9F 0x8D 0x83
+Constant (immutable)
+const
+egg / nest
+🪨
+U+1FAA8
+0xF0 0x9F 0xAA 0xA8
+Assignment
+=
+<-
+<-
+ASCII
+0x3C 0x2D
+Comparison (Equal)
+==
+≡
+≡
+U+2261
+0xE2 0x89 0xA1
+Comparison (Not Eq)
+!=
+≢
+≢
+U+2262
+0xE2 0x89 0xA2
+If Keyword
+if
+peck
+🐥
+U+1F424
+0xF0 0x9F 0x90 0xA4
+Else Keyword
+else
+swan
+🦢
+U+1F9A2
+0xF0 0x9F 0xA6 0xA2
+Block Delimiter
+{ / }
+feather
+🪶
+U+1FAB6
+0xF0 0x9F 0xAA 0xB6
+
+Що саме було виправлено:
+🪺 (Повне гніздо / True): Замінено старі байти гучномовця (0xF0 0x9F 0x94 0x8A) на реальні байти емоджі 🪺 (0xF0 0x9F 0xAA 0xBA).
+🪹 (Порожнє гніздо / False): Замінено старі байти вимкненого звуку (0xF0 0x9F 0x94 0x87) на точні байти 🪹 (0xF0 0x9F 0xAA 0xB9).
+🪨 (Камінь / Const): Замінено байти гнізда на точні байти каменю 🪨 (0xF0 0x9F 0xAA 0xA8).
+🪶 (Пір'їна / Розділювач блоку): Додано байти 0xF0 0x9F 0xAA 0xB6 для блоків синтаксису.
+Швидкий тест у Python для перевірки автомата
+Якщо захочеться перевірити будь-який символ прямо в терміналі:
+tokens = {"🪺": "TRUE", "🪹": "FALSE", "🪨": "CONST", "🍃": "MUT", "🪶": "FEATHER"}
+
+for char, name in tokens.items():
+    hex_bytes = " ".join(f"0x{b:02X}" for b in char.encode("utf-8"))
+    print(f"{name} ({char}): {hex_bytes}")
+
+
+
+User prompt: а в цьому есайменті потрібно генерувати код через llvm ir? Project Stage 1: language design, lexer and parser Languages and Compilers Design · Course project, stage 1 of 3 · deadline 6 October 2026, 23:59 Complete the first stage of the course project: design a programming language of your own and implement its lexer and its parser, which builds an Abstract Syntax Tree (AST). The stage stands on what the practices gave you — the environment, a state-machine lexer, a recursive-descent parser and a tree — and applies it to a language that is yours. Grading (15 points total) Submission format and code style 2 pt Language design and EBNF description 4 pt Lexer and parser implementation 5 pt Test cases 3 pt README.md with instructions 1 pt ai_usage.txt is required: a missing or incomplete file is an automatic grade of 0 for the stage. The lexer and the parser are written by hand: a lexer built on regular expressions, split() or a lexer generator, or a parser from a parser generator, gets 0 for the implementation. Late submission is 0. TASK 1 — AI USAGE DISCLOSURE (REQUIRED) Include a file named ai_usage.txt in your submission. It must contain a full description of your AI usage, including links to the chat transcripts or the prompts as you sent them, what you took as it was and what you changed. If you did not use AI, say so in the file. TASK 2 — DESIGN YOUR LANGUAGE (4 POINTS) Propose the syntax and the rules of your own programming language and describe it in EBNF. To add creativity: • use emojis for operators, type names or other keywords; • introduce unique syntax elements: one symbol per line, inverted lines, or any other feature you can lex and parse. Your language must support at least: • two integer types — the equivalents of i32 and i64; • a boolean type; • constants, mutable variables and constant (immutable) variables; • assignment; • comparison operators — at least the equivalents of == and !=; • type overflow checks; • if / else, equivalent to "if" boolExpr "{" stmt+ "}" [ "else" "{" stmt+ "}" ]: the if block and the else block contain at least one statement each, and the else clause is optional. The EBNF is complete: every construct your parser accepts is in the grammar, and nothing else is. Put it in grammar.ebnf. An emoji is several bytes. Your lexer reads bytes, so a keyword written as an emoji is a byte sequence for the state machine — the same mechanism as a keyword written in letters. TASK 3 — OPTIONAL: VS CODE EXTENSION FOR YOUR LANGUAGE To make emojis and other symbols easier to type, create a simple VS Code extension similar to VSCodeKaguLangSupport. It should treat your emojis as keywords and offer completion or replacement. No points; link it from the README if you make one. TASK 4 — IMPLEMENT THE LEXER AND THE PARSER (5 POINTS) • The lexer scans the source and produces tokens with a hand-written state machine over bytes. Every token carries its kind, text, line and column; lexical errors are reported with line:column. • The parser takes the tokens as input and builds the AST by recursive descent: peek and eat over the token stream, one function per grammar rule. • Use a class hierarchy for the AST nodes: ASTNode, ProgramNode, StmtNode with its statement classes, ExprNode with its expression classes, and so on. Every node keeps the position of the token it came from. 1 • The program outputs a description of the AST, including the flags and the fields of each node (mutable or not, which type, which operator), indented by depth: python3 compiler.py --ast input.txt. Your tests compare against this output, so keep it stable. • A syntax error is one line on stderr, compilation error: line L:C: message, a non-zero exit code and no output. Semantic checks and code generation for your language belong to the next project stage. Warning. Grammar first, node hierarchy second, parser third. A node class that changes every time a grammar rule changes is a sign the grammar was not finished. TASK 5 — WRITE TEST CASES (3 POINTS) • at least 15 test cases for the happy path: valid programs that parse and produce the expected AST, each with a file that holds the expected dump; • at least 15 test cases for error scenarios: invalid programs that must cause a lexical or a syntax error, each with a file that holds the expected error line; • a script that runs all of them and says which ones failed. Name a test after what it covers: if_else_nested.txt, unclosed_block.txt. Every feature of Task 2 is covered from both sides: a program that uses it and a program that misuses it. TASK 6 — README.MD WITH INSTRUCTIONS (1 POINT) README.md in the repository contains: • a description of your language: its syntax and its features, with a short example for each; • the steps to build and run your compiler; • how to run the tests. SUBMISSION 1. Create a new repository for the course project (GitHub or GitLab, private or public) and add vovaskochko as a collaborator on the first day — a reviewer can be requested only after the invitation is accepted. 2. Track your progress on a separate branch named stage1, with real commits and real messages. 3. When the stage is complete, open a pull request from stage1 into main and add vovaskochko as a reviewer. Do not merge it before the review. 4. Make sure the pull request contains everything: the source code, grammar.ebnf, ai_usage.txt, README.md, the tests and the script that runs them. 5. Submit in Moodle: the link to the repository, the link to the pull 
+Response: Ні, у цьому етапі (Stage 1) генерувати LLVM IR не потрібно.
+У ТЗ проєкту прямо зазначено:
+«Semantic checks and code generation for your language belong to the next project stage.»
+Що є кінцевим результатом Stage 1:
+Друк AST (Abstract Syntax Tree): Кінцева програма повинна лише розібрати код і вивести дерево у консоль при виклику прапорця --ast:
+python3 compiler.py --ast input.txt
+
+
+Файли здачі:
+grammar.ebnf (опис граматики)
+ai_usage.txt (опис використання штучного інтелекту)
+README.md (документація мови та інструкції запуску)
+Лексер + Парсер у коді
+Тести (щонайменше 15 успішних та 15 з помилками)
+Генерація машинного коду, LLVM IR чи семантичні перевірки типів будуть вимагатися вже у Stage 2 та Stage 3.
+
+User prompt: які є варіанти побудови граматики для цієї таблиці, прикріпляю приклад граматики з моїх практик цього курсу: Вимога з ТЗСтандартний аналогКачина адаптація (Text)Качина адаптація (Emoji / Symbol)Code PointUTF-8 Hex BytesInteger (32-bit)i32duck32🐥U+1F4240xF0 0x9F 0x90 0xA4Integer (64-bit)i64duck64🦆U+1F9860xF0 0x9F 0xA6 0x86Boolean typeboolpond_bool🥚U+1F95A0xF0 0x9F 0xA5 0x9ABoolean truetruefull🪺U+1FABA0xF0 0x9F 0xAA 0xBABoolean falsefalseempty🪹U+1FAB90xF0 0x9F 0xAA 0xB9Mutable variablemuthatch🍃U+1F3430xF0 0x9F 0x8D 0x83Constant (immutable)constegg / nest🪨U+1FAA80xF0 0x9F 0xAA 0xA8Assignment=<-<-ASCII0x3C 0x2DComparison (Equal)==≡≡U+22610xE2 0x89 0xA1Comparison (Not Eq)!=≢≢U+22620xE2 0x89 0xA2If Keywordifpeck🐥U+1F4240xF0 0x9F 0x90 0xA4Else Keywordelseswan🦢U+1F9A20xF0 0x9F 0xA6 0xA2Block Delimiter{ / }feather🪶U+1FAB60xF0 0x9F 0xAA 0xB6
+Response: Для вашої мови можна побудувати декілька варіантів граматики grammar.ebnf. Головне завдання — зберегти стиль вашої практики, але задовольняти всі вимоги Stage 1 (наприклад, у блоках if/else має бути щонайменше один statement, а також присутній контроль переповнення типів).
+Варіант 1: Класична LL(1) граматика з розділювачами ; (Рекомендована)
+Цей варіант найлегше реалізувати через рекурсивний спуск (Recursive Descent Parser). Інструкції розділяються крапкою з комою ;, що робить межі виразів однозначними.
+program          ::= { statement } ;
+
+statement        ::= var_decl
+                   | assignment
+                   | if_stmt ;
+
+var_decl         ::= ( "🍃" | "🪨" ) ident ":" type "<-" expr ";" ;
+assignment       ::= ident "<-" expr ";" ;
+
+if_stmt          ::= "🐥" expr "🪶" statement { statement } "🪶" [ "🦢" "🪶" statement { statement } "🪶" ] ;
+
+type             ::= "🐥" | "🦆" | "🥚" ;
+
+expr             ::= equality_expr ;
+equality_expr    ::= arith_expr [ ( "≡" | "≢" ) arith_expr ] ;
+arith_expr       ::= term { ( "+" | "-" ) term } ;
+term             ::= primary { ( "*" | "/" ) primary } ;
+
+primary          ::= ident
+                   | number
+                   | "🪺"
+                   | "🪹"
+                   | overflow_check
+                   | "(" expr ")" ;
+
+overflow_check   ::= "🛡️" "(" expr ")" ;
+
+
+Варіант 2: Пряма адаптація вашого прикладу з практик
+Цей варіант максимально зберігає структуру з вашого практичного заняття (з блоком finish та відсутністю обов'язкових крапок з комою), але перекладений на ваші емоджі-токени.
+program          ::= { statement } finish ;
+
+statement        ::= declaration | assignment | if_stmt ;
+
+declaration      ::= ( "🍃" | "🪨" ) ident ":" type "<-" expr ;
+assignment       ::= ident "<-" expr ;
+
+if_stmt          ::= "🐥" expr block [ "🦢" block ] ;
+block            ::= "🪶" statement { statement } "🪶" ;
+
+finish           ::= "exit" operand ;
+
+type             ::= "🐥" | "🦆" | "🥚" ;
+
+expr             ::= arith [ ( "≡" | "≢" ) arith ] ;
+arith            ::= term { ( "+" | "-" ) term } ;
+term             ::= primary { ( "*" | "/" ) primary } ;
+
+primary          ::= ident 
+                   | number 
+                   | "🪺" 
+                   | "🪹" 
+                   | "🛡️" "(" expr ")"
+                   | "(" expr ")" ;
+
+operand          ::= ident | number | "🪺" | "🪹" ;
+
+
+Важливі деталі реалізації для вашого парсера
+Розв'язання конфлікту емоджі 🐥: У вашій таблиці 🐥 означає і тип i32, і оператор if. У наведеній граматиці немає неоднозначності:
+Якщо 🐥 зустрічається на початку інструкції (statement), парсер точно знає, що це if_stmt.
+Оголошення змінної (var_decl) обов'язково починається з 🍃 (mut) або 🪨 (const). Дійшовши до двок крапки :, парсер очікує type, тому 🐥 у цій позиції буде зчитано саме як тип i32.
+Вимога ТЗ про stmt+ у if/else: ТЗ вимагає: «the if block and the else block contain at least one statement each». В EBNF запис statement { statement } гарантує наявність як мінімум однієї інструкції всередині блоку 🪶 ... 🪶.
+Перевірка переповнення типів (type overflow checks): Додано синтаксичний елемент overflow_check у вигляді 🛡️ ( expr ). У парсері це будуватиме спеціальний вузол AST (OverflowCheckNode), який на наступних етапах згенерує перевірку виходу за межі діапазону i32 або i64.
+Розділювачі блоків 🪶: Оскільки у вашій таблиці 🪶 виступає за відкриваючу { і закриваючу } дужки, парсер просто зчитує токен TOKEN_FEATHER як початок блоку і другий TOKEN_FEATHER як кінець блоку.
+
+User prompt: а що це за overflow check
+Response: Вимога «type overflow checks» у ТЗ Task 2 стосується переповнення цілочисельних типів даних (Integer Overflow).
+Коли ви виконуєте арифметичну операцію над типом i32 (чий діапазон від −2,147,483,648 до 2,147,483,647) і результат перевищує це значення, відбувається переповнення.
+Вимога ТЗ означає, що у вашій мові має бути синтаксична конструкція для перевірки або безпечного виконання операцій з можливим переповненням.
+Як це реалізувати на Stage 1?
+На цьому етапі компілятора не потрібно рахувати числа або генерувати реальні інструкції перевірки. Вам потрібно лише:
+Задати синтаксис для перевірки переповнення у grammar.ebnf.
+Навчитися розпізнавати відповідний токен у лексері.
+Створити вузол в AST (наприклад, OverflowCheckNode або CheckedExprDeclNode) під час рекурсивного спуску.
+3 варіанти синтаксичного дизайну для вашої мови
+Ви можете обрати будь-який з цих підходів для своєї мови:
+Варіант 1: Оператор-обгортка 🛡️ (Найпростіший)
+Ви загортаєте будь-який вираз чи математичну операцію в обгортку перевірки:
+Код мовою:
+🍃 result: 🐥 <- 🛡️ (a + b);
+
+
+EBNF:
+primary        ::= ident | number | overflow_expr | "(" expr ")" ;
+overflow_expr  ::= "🛡️" "(" expr ")" ;
+
+
+AST вузол: OverflowCheckExprNode(expr)
+Варіант 2: Перевірка при присвоєнні / приведенні типів
+Використовується, коли значення одного типу (наприклад, i64 / 🦆) намагаються зберегти у змінну меншого типу (i32 / 🐥):
+Код мовою:
+🍃 small_num: 🐥 <- safe_cast big_num;
+
+
+EBNF:
+assignment     ::= ident "<-" [ "safe_cast" ] expr ";" ;
+
+
+Варіант 3: Спеціальний безпечний оператор додавання +! / 🛡️+
+Замість звичайного + ви додаєте оператор із гарантованою перевіркою переповнення:
+Код мовою:
+🍃 total: 🐥 <- a 🛡️+ b;
+
+
+EBNF:
+arith_expr     ::= term { ( "+" | "-" | "🛡️+" | "🛡️-" ) term } ;
+
+
+Що має виводити AST для Stage 1
+Коли ви викликаєте python3 compiler.py --ast input.txt, для коду:
+🍃 sum: 🐥 <- 🛡️ (x + 10);
+
+
+Ваш парсер має побудувати та надрукувати приблизно таке дерево:
+VarDeclNode (mut=true, name='sum', type='i32')
+  └─ OverflowCheckNode
+       └─ BinaryOpNode (op='+')
+            ├─ VarRefNode (name='x')
+            └─ LiteralNode (value=10, type='i32')
+
+
+Сама ж обробка цієї перевірки (генерування паніки при переповненні чи перевірка меж у LLVM IR) реалізується вже на 2-му та 3-му етапах проєкту.
+
+User prompt: та можна ж і без цього і просто в коді коли змінні додаються та переливаються в інші
+Response: Так, абсолютно! Ви повністю праві.
+Перевірка переповнення типів (type overflow checks) не зобов'язана мати окремий спеціальний емоджі або синтаксичну обгортку. Вона може бути вбудованою за замовчуванням (implicit) у всі арифметичні операції (+, -, *) та присвоєння.
+Що це змінює для вашого проєкту на Stage 1?
+EBNF граматика залишається чистою: Вам не потрібно додавати ніяких 🛡️ чи спеціальних правил у grammar.ebnf. Звичайного додавання та присвоєння цілком достатньо:
+assignment ::= ident "<-" expr ";" ;
+arith_expr ::= term { ( "+" | "-" ) term } ;
+
+
+Простий код мовою PondLang: Ви просто пишете стандартний код, де переповнення вважається семантичним правилом самісінької мови:
+🍃 a: 🐥 <- 2147483647;
+🍃 b: 🐥 <- 1;
+🍃 result: 🐥 <- a + b;  # Автоматичне переповнення під час виконання
+
+
+Як це описати в документації (для вимог ТЗ): У файлі README.md (Task 6) в розділі опису синтаксису й правил мови ви просто додаєте короткий пункт:Type Overflow Behavior: Усі арифметичні операції над типами 🐥 (i32) та 🦆 (i64) за замовчуванням виконуються з автоматичною перевіркою переповнення типу (runtime overflow check). Якщо результат операції виходить за межі діапазону типу, програма завершується з помилкою.
+Чому це навіть краще?
+Менше вузлів в AST: Ваш парсер будує стандартні BinaryOpNode і AssignNode без зайвих обгорток.
+Легше тестувати (Task 5): На етапі Stage 1 тестові кейси для граматики залишаються простими та прозорими.
+На наступних етапах (Stage 2/3): Коли ви дійдете до генерації коду в LLVM IR, ви просто заміните звичайну інструкцію add на безпечну інструкцію з перевіркою прапорця overflow (наприклад, @llvm.sadd.with.overflow.i32).
+
+User prompt: в попередній граматиці було написано NL, і я тепер не знаю чому це було там раніше, і чи потрібно це мені зараз, ось який код компілятора на цій граматиці
+Response: NL у граматиці означає Newline (символ переведення рядка \n).
+Чому це було в граматиці?
+У формальному описі EBNF позначення NL використовується, коли мова є рядково-орієнтованою (line-oriented). Воно вказує, що інструкції, блоки або умови повинні обов'язково розділятися переносом рядка, а не крапкою з комою ; чи довільними пробілами.
+Наприклад, правило у коментарях вашого парсера:
+if ::= "if" expr NL block [ "else" NL block ]
+
+
+це формальний запис того, що після умови if expr обов'язково має йти перенос рядка перед блоком {.
+Як NL працює у вашому коді компілятора?
+Вам не потрібно створювати окремий токен NL у лексері, оскільки ви вже реалізували обробку нових рядків на рівні структури даних:
+Лексер (lex) розбиває код на списки токенів по рядках при досягненні b == 10 (\n):
+elif b == 10:
+    lexer_lines.append(tokens)
+    tokens = []
+    line += 1; col = 0
+
+
+Парсер (Parser) імітує перевірку NL за допомогою трьох методів:
+self.next_line() — перехід на наступний рядок.
+self.peek_line() — перегляд наступного рядка.
+self.expect_eol() — перевірка, що на поточному рядку більше немає токенів (End of Line).
+Приклад з вашого parse_if:
+if_tok = self.eat()  # 'if'
+condition = self.parse_expr()
+self.expect_eol()    # Перевірка "NL" після умови (рядок має закінчитися)
+then_block = self.parse_block()
+
+
+Чи потрібно це вам зараз?
+У коді Python (compiler.py): Ні, міняти код не потрібно. Ваша архітектура з масивом рядків lines та викликами expect_eol() / next_line() вже повністю реалізує вимогу NL.
+У файлі grammar.ebnf (документація): Так, залишіть NL. Це формальне позначення в описі мови, яке показує, де саме синтаксис вимагає перенос рядка.
+
+User prompt: переглянь граматику: program ::= { statement } finish finish ::= "finish" operand statement ::= var_decl | assignment | if var_decl ::= ( "🍃" | "🪨" ) ident ":" type "<-" expr ";" assignment ::= ident "<-" expr ";" if ::= "🐤" expr block [ "🦢" block ] block ::= "🪶" statement { statement } "🪶" type ::= "🐥" | "🦆" | "🥚" operand ::= ident | number | "🪺" | "🪹" expr ::= arith [ ( "≡" | "≢" ) arith ] arith ::= term { ("+" | "-") term } term ::= operand { ( "*" | "/" ) operand }
+Response: Граматика виглядає дуже лаконічно, а емоджі-синтаксис PondLang вдало вписується в структуру EBNF. Проте під час побудови парсера та AST ви зіткнетеся з кількома критичними обмеженнями та синтаксичними пастками.
+Key Issues & Fixes
+Відсутність дужок u виразах ( expr )
+Проблема: У правилі term ::= operand { ... } операндом може бути лише змінна, число або булевий літерал. Ви не зможете записати вираз із зміною пріоритету операцій, наприклад (a + b) * c.
+Рішення: Запровадити рівень factor, який дозволяє круглі дужки.
+Однакові символи відкриття та закриття блоку (🪶)
+Проблема: Використання одного й того ж емоджі 🪶 як для відкриття, так і для закриття блоку створює синтаксичну неоднозначність (особливо при вкладених if / while). Побудова стлака вкладеності під час парсингу буде вразливою до помилок.
+Рішення: Використовувати різні символи для початку й кінця блоку (наприклад, 🪶 ... 🪹 або відкриваючу/закриваючу дужки/парні емоджі), або переконатися, що лексер видає токени LBRACE / RBRACE за правилами відкриття/закриття.
+Обмеження на розташування finish
+Проблема: У правилі program ::= { statement } finish інструкція finish може бути розташована виключно в самому кінці всієї програми на найвищому рівні. Ви не зможете зробити достроковий вихід з програми всередині блоку if або функції.
+Рішення: Якщо достроковий finish дозволений, його варто включити до statement або дозволити всередині block.
+Відсутність унарного мінуса та заперечення (!)
+Проблема: Зараз неможливо записати від'ємні числа як вираз (-5) або зробити булеве заперечення (!🪺).
+Відсутність циклів (while)
+Якщо вимоги вашого ТЗ включають циклічні конструкції, while відсутній у списку statement.
+Оновлений та виправлений EBNF
+program     ::= { statement } finish
+
+finish      ::= "finish" operand
+
+statement   ::= var_decl | assignment | if | while
+
+var_decl    ::= ( "🍃" | "🪨" ) ident ":" type "<-" expr ";"
+
+assignment  ::= ident "<-" expr ";"
+
+if          ::= "🐤" expr block [ "🦢" block ]
+
+while       ::= "🌊" expr block
+
+block       ::= "🪶" { statement } "🪶"
+
+type        ::= "🐥" | "🦆" | "🥚"
+
+expr        ::= arith [ ( "≡" | "≢" ) arith ]
+
+arith       ::= term { ( "+" | "-" ) term }
+
+term        ::= factor { ( "*" | "/" ) factor }
+
+factor      ::= [ "-" | "!" ] operand | "(" expr ")"
+
+operand     ::= ident | number | "🪺" | "🪹"
+
+
+Порівняння змін у виразах
+
+Вираз
+Ваша початкова граматика
+Покращена граматика
+a + b * c
+Валідно
+Валідно
+(a + b) * c
+Помилка синтаксису
+Валідно
+-x + 5
+Помилка синтаксису
+Валідно
+a / b
+Валідно
+Валідно
+
+
+User prompt: додай Відсутність циклів (while) Якщо вимоги вашого ТЗ включають циклічні конструкції, while відсутній у списку statement. до обох граматик, тієї що з моїх практики і тієї що для завдання з качиною мовою, тільки там while називатиметься waddle ось поточна качина граматика: program ::= { statement } finish finish ::= "finish" operand statement ::= var_decl | assignment | if var_decl ::= ( "🍃" | "🪨" ) ident ":" type "<-" expr ";" assignment ::= ident "<-" expr ";" if ::= "🐤" expr block [ "🦢" block ] block ::= "🪶" statement { statement } "🪽" type ::= "🐥" | "🦆" | "🥚" operand ::= ident | number | "🪺" | "🪹" expr ::= arith [ ( "≡" | "≢" ) arith ] arith ::= term { ("+" | "-") term } term ::= operand { ( "*" | "/" ) operand } також додай до виразу expr дужки щоб не було математичної плутанини
+Response: 1. Граматика для практичного проєкту (compiler.py)
+У цій граматиці додано цикл while, а також рівень factor у виразах, що дозволяє використовувати дужки ("(" expr ")") для групування операцій та унарне заперечення !.
+program     ::= { statement } exit
+
+exit        ::= "exit" expr
+
+statement   ::= var_decl | assignment | if | while
+
+var_decl    ::= type [ "mut" ] ident "{" expr "}"
+
+assignment  ::= ident ":=" expr
+
+if          ::= "if" expr NL block [ "else" NL block ]
+
+while       ::= "while" expr NL block
+
+block       ::= "{" NL { statement } "}"
+
+type        ::= "i32" | "i64" | "bool"
+
+expr        ::= arith [ ( "==" | "!=" ) arith ]
+
+arith       ::= term { ( "+" | "-" ) term }
+
+term        ::= factor { ( "*" | "/" ) factor }
+
+factor      ::= [ "!" ] operand | "(" expr ")"
+
+operand     ::= ident | constant | "true" | "false"
+
+
+2. Граматика для качиної мови (PondLang)
+У качиній мові додано конструкцію циклу waddle, а також правильне розкриття дужок ("(" expr ")") у виразах за допомогою правила factor.
+program     ::= { statement } finish
+
+finish      ::= "finish" operand
+
+statement   ::= var_decl | assignment | if | waddle
+
+var_decl    ::= ( "🍃" | "🪨" ) ident ":" type "<-" expr ";"
+
+assignment  ::= ident "<-" expr ";"
+
+if          ::= "🐤" expr block [ "🦢" block ]
+
+waddle      ::= "waddle" expr block
+
+block       ::= "🪶" statement { statement } "🪽"
+
+type        ::= "🐥" | "🦆" | "🥚"
+
+expr        ::= arith [ ( "≡" | "≢" ) arith ]
+
+arith       ::= term { ( "+" | "-" ) term }
+
+term        ::= factor { ( "*" | "/" ) factor }
+
+factor      ::= operand | "(" expr ")"
+
+operand     ::= ident | number | "🪺" | "🪹"
+
+
+Що змінилося та як це працює:
+Додано рівень factor замість прямого operand у term:
+Раніше: term ::= operand { ... } означало, що множитися чи ділитися могли лише чисті операнди (числа, змінні). Вираз на кшталт (a + b) * c викликав би синтаксичну помилку.
+Тепер: term ::= factor { ... }, де factor ::= operand | "(" expr ")". Якщо парсер бачить дужку (, він рекурсивно викликає обробку всієї ієрархії виразів expr і чекає закриваючу дужку ). Це дозволяє задавати будь-яку вкладеність і математичний пріоритет.
+Конструкція циклу waddle / while:
+У качиній граматиці цикл записується як waddle expr block, наприклад:
+waddle count ≢ 0 🪶
+    count <- count - 1;
+🪽
+
+
+Обробка умови та блоку в парсері реалізується аналогічно до if, перевіряючи перенос рядка NL або відкриваючу перо-дужку 🪶.
+
+User prompt: program ::= { statement } finish finish ::= "finish" operand statement ::= var_decl | assignment | if | while var_decl ::= ( "🍃" | "🪨" ) ident ":" type "<-" expr ";" assignment ::= ident "<-" expr ";" if ::= "🐤" expr block [ "🦢" block ] while ::= "waddle" expr block block ::= "🪶" statement { statement } "🪽" type ::= "🐥" | "🦆" | "🥚" operand ::= ident | number | "🪺" | "🪹" | "(" expr ")" expr ::= arith [ ( "≡" | "≢" ) arith ] arith ::= term { ("+" | "-") term } term ::= operand { ( "*" | "/" ) operand }
+Response: Цей варіант EBNF є повністю робочим і коректно розв'язує попередні синтаксичні проблеми.
+Дужки ("(" expr ")") у operand: Це рішення працює правильно. Оскільки term складається з operand, вирази у дужках мають найвищий пріоритет. Вираз (a + b) * c розпарситься без помилок, а рекурсія є безпечною, оскільки вона починається з конкретного токена (.
+Парні символи блоку (🪶 та 🪽): Використання різних емоджі для відкриття й закриття блоку усуває неоднозначність під час парсингу вкладених конструкцій if та waddle.
+Цикл waddle: Конструкція правильна і повністю відповідає структурі if.
+Непустий блок: Правило statement { statement } гарантує, що в блоці має бути хоча б одна інструкція (це узгоджується з вашою перевіркою block must not be empty).
+Невелика деталь для перевірки
+Якщо ви плануєте дозволити від'ємні числа або булеве заперечення (наприклад, !🪺), не забудьте додати унарний оператор до operand:
+operand ::= [ "-" | "!" ] ( ident | number | "🪺" | "🪹" ) | "(" expr ")"
+
+
+В іншому ця граматика готова для реалізації парсера та генерації AST.
+
+User prompt: поясни мені цю частину коду, що це і куди додається та чому всюди різний код додається: elif b >= 128: start_col = col if (b & 0xE0) == 0xC0: length = 2 elif (b & 0xF0) == 0xE0: length = 3 elif (b & 0xF8) == 0xF0: length = 4 else: length = 1
+Response: Цей фрагмент коду — це декодер заголовка UTF-8 для лексера, який працює з байтами (bytes).
+Він потрібен для того, щоб лексер міг правильно зчитувати багатобайтові символи (емоджі 🍃, 🐤, 🪶 та математичні оператори ≡, ≢), а не розривати їх на окремі незрозумілі байти.
+1. Що це і чому тут «всюди різний код»?
+У кодуванні UTF-8 усі символи діляться на групи за кількістю байтів, які вони займають у пам'яті. Перший байт символу завжди повідомляє, скільки всього байтів іде на цей символ:
+b < 128 (1 байт): Стандартний ASCII (англійські літери, цифри, пробіли, +, -, {, }).
+b >= 128 (Багатобайтові символи): Тут використовується бітова маска & (побітове «І»), щоб перевірити перші біти старшого байта:
+
+Перевірка в коді
+Маска в бітах
+Шаблон байта
+Довжина
+Що це за символи?
+Приклади з вашої мови
+(b & 0xE0) == 0xC0
+11100000
+110xxxxx
+2 байти
+Кирилиця, розширений латинський алфавіт
+а, б, є
+(b & 0xF0) == 0xE0
+11100000
+1110xxxx
+3 байти
+Спеціальні математичні та логічні символи
+≡, ≢
+(b & 0xF8) == 0xF0
+11111000
+11110xxx
+4 байти
+Емоджі та рідкісні Unicode-символи
+🍃, 🪨, 🐤, 🪶, 🪽, 🐥, 🦆
+
+Різні умови потрібні тому, що емоджі займають 4 байти, а символ ≡ — 3 байти. Якщо прочитати лише 1 байт замість 4, ви отримаєте зіпсований символ і помилку UnicodeDecodeError.
+2. Куди це додається?
+Цей блок додається в лексер (lex) у стан START, коли ви зустрічаєте перший байт нового токена.
+Після визначення length ви зчитуєте весь заголовок символу одразу через зріз data[i : i + length]:
+elif b >= 128:
+    start_col = col
+    if (b & 0xE0) == 0xC0:
+        length = 2
+    elif (b & 0xF0) == 0xE0:
+        length = 3
+    elif (b & 0xF8) == 0xF0:
+        length = 4
+    else:
+        length = 1
+
+    # Беремо всі байти символу та декодуємо в UTF-8 рядок
+    char = data[i : i + length].decode("utf-8")
+
+    # Перевіряємо, що це за символ
+    if char in ("🍃", "🪨"):
+        tokens.append(Token("specifier", char, line, start_col))
+    elif char in ("🐥", "🦆", "🥚"):
+        tokens.append(Token("typename", char, line, start_col))
+    elif char == "🐤":
+        tokens.append(Token("keyword", "if", line, start_col))
+    elif char == "🦢":
+        tokens.append(Token("keyword", "else", line, start_col))
+    elif char in ("≡", "≢"):
+        tokens.append(Token("comparison", char, line, start_col))
+    elif char == "🪶":
+        tokens.append(Token("lbrace", char, line, start_col))
+    elif char == "🪽":
+        tokens.append(Token("rbrace", char, line, start_col))
+    elif char in ("🪺", "🪹"):
+        tokens.append(Token("bool_literal", char, line, start_col))
+    else:
+        raise_err(10, line, col, ue_part=char)
+
+    # Пропускаємо прочитані байти в циклі
+    i += length
+    col += 1
+    continue
+
+
+Чому це працює?
+Без цього коду лічильник i += 1 зчитував би емоджі 🍃 по одному байту за ітерацію. Оскільки один байт емоджі не є валідним ASCII-символом, ваш компілятор видавав би помилку unexpected byte на кожному байтику емоджі. Завдяки цій перевірці ви за один крок зчитуєте весь символ 🍃 і рухаєте вказівник i одразу на length байтів уперед.
+
+User prompt: я не розумію як вирішити цю проблема: When both arms exit, the program's last exit is rejected: bool c{false} / if c / { / exit 1 / } / else / { / exit 2 / } / exit 3 gives line 10:1: exit must be the last statement instead of Program exit with result 2. The grammar stays program ::= { statement } exit: the merge block has no predecessor but still gets the last exit. guarantees_exit (compiler.py:387) makes the opposite rule, and tests/ok/exit_in_arm.txt has no final exit. бо я не знаю як маю закінчуватись програма коли програма така: bool c{false} / if c / { / exit 1 / } / else / { / exit 2 / }
+Response: Суть цієї проблеми полягає в розходженні між синтаксичним правилом граматики та логікою виконання (runtime).
+Як має закінчуватися така програма?
+Оскільки за граматикою правила вашої мови:
+program ::= { statement } exit
+
+
+Будь-яка програма синтаксично ЗАВЖДИ має закінчуватися інструкцією exit на найвищому рівні (у вашому прикладі це exit 3).
+З погляду виконання (runtime):
+Якщо c дорівнює false, виконання заходить у гілку else і виконує exit 2.
+Програма одразу завершується з результатом 2.
+Інструкція exit 3 фізично ніколи не виконується — це недосяжний код (dead code), але синтаксично вона обов'язкова, тому що того вимагає граматика program ::= { statement } exit.
+Чому виникала помилка у вашому компіляторі?
+У вашій функції parse_program викликався guarantees_exit(stmt_node):
+Коли парсер бачив if c { exit 1 } else { exit 2 }, функція guarantees_exit повертала True (бо обидві гілки гарантували вихід).
+Парсер виставляв прапорець has_exit = True.
+Коли далі парсер доходив до кінцевого exit 3, він бачив has_exit == True і вважав, що після виходу з'явилася "зайва" інструкція, через що викидав помилку: line 10:1: exit must be the last statement.
+Як це виправити у коді компілятора?
+1. Спростити parse_program у Parser
+Прапорець завершення програми верхнього рівня повинен спрацьовувати тільки тоді, коли прочитано сам токен exit верхнього рівня, а не автоматично через guarantees_exit:
+def parse_program(self):
+    stmts = []
+    exit_node = None
+
+    while self.peek_line() is not None:
+        self.next_line()
+        tok = self.peek()
+
+        if tok is not None and tok.kind == "statement" and tok.text in ("exit", "finish"):
+            exit_node = self.parse_exit()
+            self.expect_eol()
+            # Якщо ПІСЛЯ кінцевого exit на верхньому рівні є ще щось — це помилка 6
+            if self.peek_line() is not None:
+                nxt = self.peek_line()
+                raise_err(6, nxt[0].line, nxt[0].col)
+            break
+        else:
+            stmt_node = self.parse_statement()
+            stmts.append(stmt_node)
+            if not isinstance(stmt_node, (IfNode, WhileNode)):
+                self.expect_eol()
+
+    if exit_node is None:
+        err_line = self.lines[-1][-1].line if (self.lines and self.lines[-1]) else 1
+        raise_err(5, err_line, 1)
+
+    first_line = stmts[0].line if stmts else exit_node.line
+    first_col  = stmts[0].col  if stmts else exit_node.col
+    return ProgramNode(first_line, first_col, stmts, exit_node)
+
+
+2. Захистити кодогенерацію у CodeGenVisitor
+Оскільки exit 3 може опинитися у недосяжному базовому блоці LLVM (бо обидві гілки if/else вже згенерували ret), у кодогенераторі перед генерацією кінцевого exit слід перевіряти, чи блок не завершено (is_terminated):
+def visit_program(self, node):
+    for stmt in node.stmts:
+        stmt.accept(self)
+
+    # Генеруємо кінцевий exit тільки якщо поточний блок LLVM ще не терміновано (не було ret)
+    if node.exit and not self.builder.block.is_terminated:
+        node.exit.accept(self)
+
+    if not self.builder.block.is_terminated:
+        self.builder.unreachable()
+
+
+
+User prompt: коротко напиши яка має бути концепція хендлінгу таких випадків
+Response: Концепція зводиться до розділення синтаксичної вимоги мови та контролю досяжності коду (Dead Code Handling):
+Парсинг (Синтаксис): Парсер беззастережно приймає підсумковий exit на найвищому рівні як обов'язкову вимогу граматики (program ::= { statement } exit). Наявність exit всередині гілок if/else не повинна блокувати парсинг кінцевої інструкції.
+Кодогенерація (LLVM IR): Генерація коду для кінцевого exit здійснюється за умовою перевірки стану базового блоку (not builder.block.is_terminated):
+Блок відкритий: генерується виклики printf і ret.
+Блок вже термінований (усі гілки завершилися): кінцевий exit ігнорується як недосяжний код (dead code).
+Семантичний аналіз: Наявність недосяжного підсумкового exit вважається коректним станом програми, а не помилкою компіляції, оскільки цього вимагає формальна граматика.
+
+User prompt: а якщо є якийсь код після екзітів у if-else але немає загального, тоді ми киаємо помилку що немає загального чи те що після екзіта щось є
+Response: У такому випадку парсер викине помилку про те, що після exit щось є (exit must be the last statement).
+Чому саме так?
+Парсер обробляє код згори донизу, лінійно (Top-Down):
+Парсер читає програму рядок за рядком і заходить у блок if.
+Усередині блоку він зчитує exit 1.
+На наступному рядку у цьому ж блоці він бачить нову інструкцію (наприклад, a <- 5;).
+Парсер одразу фіксує помилку на цьому рядку, оскільки після exit у цьому ж блоці не може бути інших інструкцій, і негайно перериває роботу (raise_err).
+До перевірки кінця файлу та відсутності підсумкового exit парсер навіть не доходить, бо виконання зупинилося раніше.
+Правило: Парсер завжди кидає першу синтаксичну помилку, яку він фізично зустрічає під час сканування коду зверху вниз.
+
+Claude https://claude.ai/share/3ac4b6b0-4f4a-4969-a777-2eeef925635b
+

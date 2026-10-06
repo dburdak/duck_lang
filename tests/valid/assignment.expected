@@ -1,0 +1,7 @@
+Program
+  Decl x 🐥 mut
+    Const 1
+  Assign x
+    Const 2
+  Exit
+    Var x
