@@ -100,18 +100,18 @@ def lex(data: bytes):
             i += 1
         # Identifiers and text keywords
         elif is_alpha(b):
-            start_i = i
+            start = i
             start_col = col
             while i < n and (is_alpha(data[i]) or is_digit(data[i])):
                 i += 1
                 col += 1
-            word_bytes = data[start_i:i]
+            word_bytes = data[start:i]
             kind = KEYWORD_BYTES.get(word_bytes, "ident")
             text = word_bytes.decode("ascii")
             tokens.append(Token(kind, text, line, start_col))
         # Number Literals
         elif is_digit(b):
-            start_i = i
+            start = i
             start_col = col
             while i < n and is_digit(data[i]):
                 i += 1
@@ -120,7 +120,7 @@ def lex(data: bytes):
                 bad_b = data[i]
                 char_disp = chr(bad_b) if 32 <= bad_b <= 126 else f"0x{bad_b:02X}"
                 compilation_error(line, col, f"unexpected byte '{char_disp}'")
-            num_bytes = data[start_i:i]
+            num_bytes = data[start:i]
             num_str = num_bytes.decode("ascii")
             stripped = num_str.lstrip("0")
             if len(stripped) > 19 or (len(stripped) > 0 and int(num_str) > I64_MAX):
@@ -204,28 +204,30 @@ def lex(data: bytes):
 
 
 # ── AST Node Hierarchy ────────────────────────────────────────────────
-class ASTNode:
-    def __init__(self, line: int, col: int):
-        self.line = line
-        self.col = col
+class Node:
+    def __init__(self, line, col):
+        self.line, self.col = line, col
 
 
-class ProgramNode(ASTNode):
-    def __init__(self, line: int, col: int, stmts: list):
+class ProgramNode(Node):
+    def __init__(self, line, col, stmts, exit_node):
         super().__init__(line, col)
         self.stmts = stmts
+        self.exit = exit_node
 
     def dump(self, indent=0):
         print(" " * indent + "Program")
         for stmt in self.stmts:
             stmt.dump(indent + 2)
+        if self.exit:
+            self.exit.dump(indent + 2)
 
 
-class StmtNode(ASTNode):
+class StmtNode(Node):
     pass
 
 
-class ExprNode(ASTNode):
+class ExprNode(Node):
     pass
 
 
@@ -294,7 +296,7 @@ class BoolNode(ExprNode):
         print(" " * indent + f"Bool {'true' if self.val else 'false'}")
 
 
-class BlockNode(ASTNode):
+class BlockNode(Node):
     def __init__(self, line: int, col: int, stmts: list):
         super().__init__(line, col)
         self.stmts = stmts
@@ -557,7 +559,6 @@ class Parser:
         return BlockNode(lbrace_tok.line, lbrace_tok.col, stmts)
 
 
-# ── Main Entrypoint ───────────────────────────────────────────────────
 def main():
     if len(sys.argv) != 3 or sys.argv[1] != "--ast":
         sys.stderr.write("Usage: python3 src/compiler.py --ast <input.txt>\n")
