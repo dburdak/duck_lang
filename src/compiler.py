@@ -1,76 +1,57 @@
 import argparse
 import sys
-
-# Error reporting
-def raise_err(error, err_line, column, ue_part=""):
-    ERRORS = {
-        1: "redeclared variable",
-        2: "undeclared variable",
-        3: "invalid variable name",
-        4: "unparsable statement",
-        5: "missing finish statement",
-        6: "finish must be the last statement",
-        7: "unparsable finish statement",
-        8: "unsupported operator",
-        9: "'🪶' is not closed before the end of the line",
-        10: "unexpected byte",
-        11: "unknown type",
-        12: "cannot assign to immutable variable",
-        13: "expected '<-'",
-    }
-
-    if isinstance(error, int):
-        code = error
-        msg = ERRORS.get(code, "unknown compilation error")
-        if ue_part:
-            msg += f" {ue_part}"
-    else:
-        code = 13
-        msg = str(error)
-
-    sys.stderr.write(f"compilation error: line {err_line}:{column}: {msg}\n")
-    sys.exit(code)
+from typing import List
 
 
-# Table of Emoji to UTF-8 Byte Sequences & Unicode Code Points
-EMOJI_UTF8_TABLE = {
-    "🐥": {"codepoint": "U+1F425", "utf8_bytes": b"\xF0\x9F\x90\xA5", "utf8_hex": "0xF0 0x9F 0x90 0xA5", "desc": "Integer (32-bit)"},
-    "🦆": {"codepoint": "U+1F986", "utf8_bytes": b"\xF0\x9F\xA6\x86", "utf8_hex": "0xF0 0x9F 0xA6 0x86", "desc": "Integer (64-bit)"},
-    "🥚": {"codepoint": "U+1F95A", "utf8_bytes": b"\xF0\x9F\xA5\x9A", "utf8_hex": "0xF0 0x9F 0xA5 0x9A", "desc": "Boolean type"},
-    "🪺": {"codepoint": "U+1FABA", "utf8_bytes": b"\xF0\x9F\xAA\xBA", "utf8_hex": "0xF0 0x9F 0xAA 0xBA", "desc": "Boolean true"},
-    "🪹": {"codepoint": "U+1FAB9", "utf8_bytes": b"\xF0\x9F\xAA\xB9", "utf8_hex": "0xF0 0x9F 0xAA 0xB9", "desc": "Boolean false"},
-    "🍃": {"codepoint": "U+1F343", "utf8_bytes": b"\xF0\x9F\x8D\x83", "utf8_hex": "0xF0 0x9F 0x8D 0x83", "desc": "Mutable variable"},
-    "🪨": {"codepoint": "U+1FAA8", "utf8_bytes": b"\xF0\x9F\xAA\xA8", "utf8_hex": "0xF0 0x9F 0xAA 0xA8", "desc": "Constant variable"},
-    "🐤": {"codepoint": "U+1F424", "utf8_bytes": b"\xF0\x9F\x90\xA4", "utf8_hex": "0xF0 0x9F 0x90 0xA4", "desc": "If keyword"},
-    "🦢": {"codepoint": "U+1F9A2", "utf8_bytes": b"\xF0\x9F\xA6\xA2", "utf8_hex": "0xF0 0x9F 0xA6 0xA2", "desc": "Else keyword"},
-    "🪶": {"codepoint": "U+1FAB6", "utf8_bytes": b"\xF0\x9F\xAA\xB6", "utf8_hex": "0xF0 0x9F 0xAA 0xB6", "desc": "Block open"},
-    "🪽": {"codepoint": "U+1FABD", "utf8_bytes": b"\xF0\x9F\xAA\xBD", "utf8_hex": "0xF0 0x9F 0xAA 0xBD", "desc": "Block close"},
-    "≡": {"codepoint": "U+2261", "utf8_bytes": b"\xE2\x89\xA1", "utf8_hex": "0xE2 0x89 0xA1", "desc": "Equal comparison"},
-    "≢": {"codepoint": "U+2262", "utf8_bytes": b"\xE2\x89\xA2", "utf8_hex": "0xE2 0x89 0xA2", "desc": "Not equal comparison"},
-}
+# ── Error Reporting ───────────────────────────────────────────────────
+def compilation_error(line: int, col: int, message: str):
+    sys.stderr.write(f"compilation error: line {line}:{col}: {message}\n")
+    sys.exit(1)
 
-# Lexer Keywords dictionary for Duck Lang
-KEYWORDS = {
-    # Types
-    "🐥": "typename",
-    "🦆": "typename",
-    "🥚": "typename",
-    # Specifiers
-    "🍃": "specifier",
-    "🪨": "specifier",
-    # Boolean Literals
-    "🪺": "bool_literal",
-    "🪹": "bool_literal",
-    # Control Flow
-    "🐤": "keyword",
-    "🦢": "keyword",
-    "waddle": "keyword",
-    "finish": "statement",
+
+# ── Emoji & Symbol UTF-8 Table ─────────────────────────────────────────
+class EmojiEntry:
+    def __init__(self, seq: bytes, kind: str, text: str, codepoint: str, desc: str):
+        self.seq = seq
+        self.kind = kind
+        self.text = text
+        self.codepoint = codepoint
+        self.desc = desc
+
+    @property
+    def utf8_hex(self) -> str:
+        return " ".join(f"0x{b:02X}" for b in self.seq)
+
+
+# Single source of truth for non-ASCII symbols in Duck Lang
+EMOJI_UTF8_TABLE: List[EmojiEntry] = [
+    EmojiEntry(b"\xF0\x9F\x90\xA5", "typename", "🐥", "U+1F425", "Integer (32-bit)"),
+    EmojiEntry(b"\xF0\x9F\xA6\x86", "typename", "🦆", "U+1F986", "Integer (64-bit)"),
+    EmojiEntry(b"\xF0\x9F\xA5\x9A", "typename", "🥚", "U+1F95A", "Boolean type"),
+    EmojiEntry(b"\xF0\x9F\x8D\x83", "specifier", "🍃", "U+1F343", "Mutable variable"),
+    EmojiEntry(b"\xF0\x9F\xAA\xA8", "specifier", "🪨", "U+1FAA8", "Constant variable"),
+    EmojiEntry(b"\xF0\x9F\xAA\xBA", "bool_literal", "🪺", "U+1FABA", "Boolean true"),
+    EmojiEntry(b"\xF0\x9F\xAA\xB9", "bool_literal", "🪹", "U+1FAB9", "Boolean false"),
+    EmojiEntry(b"\xF0\x9F\x90\xA4", "keyword", "🐤", "U+1F424", "If keyword"),
+    EmojiEntry(b"\xF0\x9F\xA6\xA2", "keyword", "🦢", "U+1F9A2", "Else keyword"),
+    EmojiEntry(b"\xF0\x9F\xAA\xB6", "lbrace", "🪶", "U+1FAB6", "Block open"),
+    EmojiEntry(b"\xF0\x9F\xAA\xBD", "rbrace", "🪽", "U+1FABD", "Block close"),
+    EmojiEntry(b"\xE2\x89\xA1", "comparison", "≡", "U+2261", "Equal comparison"),
+    EmojiEntry(b"\xE2\x89\xA2", "comparison", "≢", "U+2262", "Not equal comparison"),
+]
+
+# Sort table entries by sequence length descending
+EMOJI_UTF8_TABLE.sort(key=lambda e: len(e.seq), reverse=True)
+
+# Reserved text keywords
+KEYWORD_BYTES = {
+    b"waddle": "keyword",
+    b"finish": "statement",
 }
 
 
 class Token:
-    def __init__(self, kind, text, line, col):
+    def __init__(self, kind: str, text: str, line: int, col: int):
         self.kind = kind
         self.text = text
         self.line = line
@@ -102,41 +83,54 @@ def lex(data: bytes):
     lexer_lines, tokens = [], []
     line, col = 1, 1
     i = 0
-    while i < len(data):
+    n = len(data)
+
+    I64_MAX = 9223372036854775807
+
+    while i < n:
         b = data[i]
 
         # Whitespace
         if b in (32, 9, 13):  # space, tab, \r
             i += 1
             col += 1
-        # Newline
         elif b == 10:  # \n
-            lexer_lines.append(tokens)
-            tokens = []
             line += 1
             col = 1
             i += 1
         # Identifiers and text keywords
         elif is_alpha(b):
-            start = i
+            start_i = i
             start_col = col
-            while i < len(data) and (is_alpha(data[i]) or is_digit(data[i])):
+            while i < n and (is_alpha(data[i]) or is_digit(data[i])):
                 i += 1
                 col += 1
-            word = data[start:i].decode()
-            tokens.append(Token(KEYWORDS.get(word, "ident"), word, line, start_col))
-        # Numbers
+            word_bytes = data[start_i:i]
+            kind = KEYWORD_BYTES.get(word_bytes, "ident")
+            text = word_bytes.decode("ascii")
+            tokens.append(Token(kind, text, line, start_col))
+        # Number Literals
         elif is_digit(b):
-            start = i
+            start_i = i
             start_col = col
-            while i < len(data) and is_digit(data[i]):
+            while i < n and is_digit(data[i]):
                 i += 1
                 col += 1
-            if i < len(data) and is_alpha(data[i]):
-                raise_err(10, line, col, ue_part=chr(data[i]))
-            num = data[start:i].decode()
-            tokens.append(Token("constant", num, line, start_col))
-        # Parentheses
+            if i < n and is_alpha(data[i]):
+                bad_b = data[i]
+                char_disp = chr(bad_b) if 32 <= bad_b <= 126 else f"0x{bad_b:02X}"
+                compilation_error(line, col, f"unexpected byte '{char_disp}'")
+            num_bytes = data[start_i:i]
+            num_str = num_bytes.decode("ascii")
+            stripped = num_str.lstrip("0")
+            if len(stripped) > 19 or (len(stripped) > 0 and int(num_str) > I64_MAX):
+                compilation_error(
+                    line,
+                    start_col,
+                    f"integer literal {num_str} is out of range (exceeds i64 max {I64_MAX})",
+                )
+            tokens.append(Token("constant", num_str, line, start_col))
+        # Single-byte ASCII punctuation and operators
         elif b == ord("("):
             tokens.append(Token("lparen", "(", line, col))
             i += 1
@@ -145,7 +139,6 @@ def lex(data: bytes):
             tokens.append(Token("rparen", ")", line, col))
             i += 1
             col += 1
-        # Punctuation
         elif b == ord(":"):
             tokens.append(Token("colon", ":", line, col))
             i += 1
@@ -154,90 +147,90 @@ def lex(data: bytes):
             tokens.append(Token("semicolon", ";", line, col))
             i += 1
             col += 1
-        # Assignment operator <-
         elif b == ord("<"):
-            if i + 1 < len(data) and data[i + 1] == ord("-"):
+            if i + 1 < n and data[i + 1] == ord("-"):
                 tokens.append(Token("assignment", "<-", line, col))
                 i += 2
                 col += 2
             else:
-                raise_err(10, line, col, ue_part="<")
-        # Single-byte arithmetic operators (+, -, *, /)
+                compilation_error(line, col, "unexpected byte '<'")
         elif is_operator(b):
             tokens.append(Token("operator", chr(b), line, col))
             i += 1
             col += 1
-        # Multibyte UTF-8 sequence (emojis, unicode symbols ≡, ≢, 🪶, 🪽, etc.)
+        # Multibyte UTF-8 matching via EMOJI_UTF8_TABLE
         elif b >= 128:
             start_col = col
-            if (b & 0xE0) == 0xC0:
-                length = 2
-            elif (b & 0xF0) == 0xE0:
-                length = 3
-            elif (b & 0xF8) == 0xF0:
-                length = 4
-            else:
-                length = 1
+            matched = False
+            for entry in EMOJI_UTF8_TABLE:
+                if data.startswith(entry.seq, i):
+                    tokens.append(Token(entry.kind, entry.text, line, start_col))
+                    i += len(entry.seq)
+                    col += 1
+                    matched = True
+                    break
 
-            if i + length > len(data):
-                raise_err(10, line, col, ue_part="invalid UTF-8 sequence")
+            if not matched:
+                # UTF-8 byte sequence error handling
+                if 0x80 <= b <= 0xBF:
+                    compilation_error(line, col, f"invalid UTF-8 byte 0x{b:02X}")
+                elif b == 0xFF or b < 0xC0 or b > 0xF7:
+                    compilation_error(line, col, f"invalid UTF-8 byte 0x{b:02X}")
 
-            try:
-                char_str = data[i : i + length].decode("utf-8")
-            except UnicodeDecodeError:
-                raise_err(10, line, col, ue_part="invalid UTF-8 bytes")
+                if 0xC0 <= b <= 0xDF:
+                    expected_len = 2
+                elif 0xE0 <= b <= 0xEF:
+                    expected_len = 3
+                elif 0xF0 <= b <= 0xF7:
+                    expected_len = 4
+                else:
+                    expected_len = 1
 
-            if char_str in KEYWORDS:
-                tokens.append(Token(KEYWORDS[char_str], char_str, line, start_col))
-            elif char_str == "🪶":
-                tokens.append(Token("lbrace", "🪶", line, start_col))
-            elif char_str == "🪽":
-                tokens.append(Token("rbrace", "🪽", line, start_col))
-            elif char_str in ("≡", "≢"):
-                tokens.append(Token("comparison", char_str, line, start_col))
-            else:
-                raise_err(10, line, start_col, ue_part=char_str)
+                if i + expected_len > n:
+                    compilation_error(line, col, "truncated UTF-8 sequence at end of file")
 
-            i += length
-            col += 1
+                seq_bytes = data[i : i + expected_len]
+                for cb in seq_bytes[1:]:
+                    if cb < 0x80 or cb > 0xBF:
+                        compilation_error(line, col, f"invalid UTF-8 byte 0x{cb:02X}")
+
+                hex_str = " ".join(f"0x{cb:02X}" for cb in seq_bytes)
+                compilation_error(line, col, f"unexpected byte sequence {hex_str}")
         else:
-            raise_err(10, line, col, ue_part=chr(b))
+            char_disp = chr(b) if 32 <= b <= 126 else f"0x{b:02X}"
+            compilation_error(line, col, f"unexpected byte '{char_disp}'")
 
-    if tokens:
-        lexer_lines.append(tokens)
-    return lexer_lines
+    return tokens
 
 
 # ── AST Node Hierarchy ────────────────────────────────────────────────
-class Node:
-    def __init__(self, line, col):
-        self.line, self.col = line, col
+class ASTNode:
+    def __init__(self, line: int, col: int):
+        self.line = line
+        self.col = col
 
 
-class ProgramNode(Node):
-    def __init__(self, line, col, stmts, exit_node):
+class ProgramNode(ASTNode):
+    def __init__(self, line: int, col: int, stmts: list):
         super().__init__(line, col)
         self.stmts = stmts
-        self.exit = exit_node
 
     def dump(self, indent=0):
         print(" " * indent + "Program")
         for stmt in self.stmts:
             stmt.dump(indent + 2)
-        if self.exit:
-            self.exit.dump(indent + 2)
 
 
-class StmtNode(Node):
+class StmtNode(ASTNode):
     pass
 
 
-class ExprNode(Node):
+class ExprNode(ASTNode):
     pass
 
 
 class DeclNode(StmtNode):
-    def __init__(self, line, col, type_name: str, name: str, mutable: bool, init):
+    def __init__(self, line: int, col: int, type_name: str, name: str, mutable: bool, init: ExprNode):
         super().__init__(line, col)
         self.type_name = type_name
         self.name = name
@@ -251,7 +244,7 @@ class DeclNode(StmtNode):
 
 
 class AssignNode(StmtNode):
-    def __init__(self, line, col, name, value):
+    def __init__(self, line: int, col: int, name: str, value: ExprNode):
         super().__init__(line, col)
         self.name = name
         self.value = value
@@ -262,7 +255,7 @@ class AssignNode(StmtNode):
 
 
 class BinOpNode(ExprNode):
-    def __init__(self, line, col, op, left, right):
+    def __init__(self, line: int, col: int, op: str, left: ExprNode, right: ExprNode):
         super().__init__(line, col)
         self.op = op
         self.left = left
@@ -275,7 +268,7 @@ class BinOpNode(ExprNode):
 
 
 class VarNode(ExprNode):
-    def __init__(self, line, col, name):
+    def __init__(self, line: int, col: int, name: str):
         super().__init__(line, col)
         self.name = name
 
@@ -284,7 +277,7 @@ class VarNode(ExprNode):
 
 
 class ConstNode(ExprNode):
-    def __init__(self, line, col, val):
+    def __init__(self, line: int, col: int, val: str):
         super().__init__(line, col)
         self.val = val
 
@@ -293,7 +286,7 @@ class ConstNode(ExprNode):
 
 
 class BoolNode(ExprNode):
-    def __init__(self, line, col, val: bool):
+    def __init__(self, line: int, col: int, val: bool):
         super().__init__(line, col)
         self.val = val
 
@@ -301,22 +294,19 @@ class BoolNode(ExprNode):
         print(" " * indent + f"Bool {'true' if self.val else 'false'}")
 
 
-class BlockNode(Node):
-    def __init__(self, line, col, stmts, exit_node=None):
+class BlockNode(ASTNode):
+    def __init__(self, line: int, col: int, stmts: list):
         super().__init__(line, col)
         self.stmts = stmts
-        self.exit = exit_node
 
     def dump(self, indent=0):
         print(" " * indent + "Block")
         for s in self.stmts:
             s.dump(indent + 2)
-        if self.exit:
-            self.exit.dump(indent + 2)
 
 
 class IfNode(StmtNode):
-    def __init__(self, line, col, condition, then_block, else_block=None):
+    def __init__(self, line: int, col: int, condition: ExprNode, then_block: BlockNode, else_block: BlockNode = None):
         super().__init__(line, col)
         self.condition = condition
         self.then_block = then_block
@@ -327,12 +317,11 @@ class IfNode(StmtNode):
         self.condition.dump(indent + 2)
         self.then_block.dump(indent + 2)
         if self.else_block:
-            print(" " * indent + "Else")
             self.else_block.dump(indent + 2)
 
 
 class WhileNode(StmtNode):
-    def __init__(self, line, col, condition, body_block):
+    def __init__(self, line: int, col: int, condition: ExprNode, body_block: BlockNode):
         super().__init__(line, col)
         self.condition = condition
         self.body_block = body_block
@@ -343,8 +332,8 @@ class WhileNode(StmtNode):
         self.body_block.dump(indent + 2)
 
 
-class ExitNode(Node):
-    def __init__(self, line, col, val):
+class ExitNode(StmtNode):
+    def __init__(self, line: int, col: int, val: ExprNode):
         super().__init__(line, col)
         self.val = val
 
@@ -353,88 +342,77 @@ class ExitNode(Node):
         self.val.dump(indent + 2)
 
 
-def guarantees_exit(node):
-    if node is None:
-        return False
-    if isinstance(node, ExitNode):
-        return True
-    if isinstance(node, IfNode):
-        return guarantees_exit(node.then_block) and guarantees_exit(node.else_block)
-    if isinstance(node, BlockNode):
-        if node.exit is not None:
-            return True
-        return any(guarantees_exit(s) for s in node.stmts)
-    return False
-
-
 # ── Parser ────────────────────────────────────────────────────────────
+# Grammar Rule -> Parser Function Mapping:
+# program    ::= { statement } finish                       -> parse_program()
+# statement  ::= var_decl | assignment | if | while         -> parse_statement()
+# var_decl   ::= ( "🍃" | "🪨" ) ident ":" type "<-" expr ";"  -> parse_decl()
+# assignment ::= ident "<-" expr ";"                        -> parse_assignment()
+# if         ::= "🐤" expr block [ "🦢" block ]             -> parse_if()
+# while      ::= "waddle" expr block                        -> parse_while()
+# block      ::= "🪶" block_item { block_item } "🪽"         -> parse_block()
+# finish     ::= "finish" operand ";"                       -> parse_exit()
+# expr       ::= arith [ ( "≡" | "≢" ) arith ]              -> parse_expr()
+# arith      ::= term { ( "+" | "-" ) term }                -> parse_arith()
+# term       ::= operand { ( "*" | "/" ) operand }          -> parse_term()
+# operand    ::= ident | number | "🪺" | "🪹" | "(" expr ")" -> parse_operand()
 class Parser:
-    def __init__(self, tokens):
+    def __init__(self, tokens: List[Token]):
         self.tokens = tokens
         self.pos = 0
 
-    def peek(self):
+    def peek(self) -> Token:
         if self.pos < len(self.tokens):
             return self.tokens[self.pos]
         return None
 
-    def eat(self):
+    def eat(self) -> Token:
         tok = self.peek()
         if tok:
             self.pos += 1
         return tok
 
-    def expect(self, kind, expected_desc):
+    def expect(self, kind: str, expected_desc: str) -> Token:
         tok = self.peek()
         if tok is None:
             line, col = self.get_pos_info()
-            raise_err(f"expected {expected_desc}, found end of file", line, col)
+            compilation_error(line, col, f"expected {expected_desc}, found end of file")
         if tok.kind != kind:
-            raise_err(f"expected {expected_desc}, got '{tok.text}'", tok.line, tok.col)
+            compilation_error(tok.line, tok.col, f"expected {expected_desc}, got '{tok.text}'")
         return self.eat()
 
     def get_pos_info(self):
-        if self.pos < len(self.tokens):
-            tok = self.tokens[self.pos]
-            return tok.line, tok.col
         if self.tokens:
             last = self.tokens[-1]
             return last.line, last.col + len(last.text)
         return 1, 1
 
-    def parse_program(self):
+    def parse_program(self) -> ProgramNode:
         stmts = []
-        exit_node = None
-        has_exit = False
+        while self.peek() is not None and self.peek().text != "finish":
+            stmts.append(self.parse_statement())
 
-        while self.peek() is not None:
-            if has_exit:
-                tok = self.peek()
-                raise_err(6, tok.line, tok.col)
-
-            tok = self.peek()
-            if tok.kind == "statement" and tok.text == "finish":
-                exit_node = self.parse_exit()
-                has_exit = True
-            else:
-                stmt_node = self.parse_statement()
-                stmts.append(stmt_node)
-                if guarantees_exit(stmt_node):
-                    has_exit = True
-
-        if not has_exit:
-            line, col = self.get_pos_info()
-            raise_err(5, line, col)
-
-        first_line = stmts[0].line if stmts else (exit_node.line if exit_node else 1)
-        first_col = stmts[0].col if stmts else (exit_node.col if exit_node else 1)
-        return ProgramNode(first_line, first_col, stmts, exit_node)
-
-    def parse_statement(self):
         tok = self.peek()
         if tok is None:
             line, col = self.get_pos_info()
-            raise_err("expected statement, found end of file", line, col)
+            compilation_error(line, col, "missing finish statement")
+
+        exit_node = self.parse_exit()
+        stmts.append(exit_node)
+
+        if self.peek() is not None:
+            trailing = self.peek()
+            compilation_error(trailing.line, trailing.col, "finish must be the last statement")
+
+        first_line = stmts[0].line if stmts else 1
+        first_col = stmts[0].col if stmts else 1
+        return ProgramNode(first_line, first_col, stmts)
+
+    def parse_statement(self) -> StmtNode:
+        tok = self.peek()
+        if tok is None:
+            line, col = self.get_pos_info()
+            compilation_error(line, col, "expected statement, found end of file")
 
         if tok.kind == "specifier":
             return self.parse_decl()
@@ -445,9 +423,9 @@ class Parser:
         elif tok.kind == "keyword" and tok.text == "waddle":
             return self.parse_while()
         else:
-            raise_err(f"cannot start a statement with '{tok.text}'", tok.line, tok.col)
+            compilation_error(tok.line, tok.col, f"cannot start a statement with '{tok.text}'")
 
-    def parse_decl(self):
+    def parse_decl(self) -> DeclNode:
         spec_tok = self.eat()  # '🍃' | '🪨'
         mutable = (spec_tok.text == "🍃")
 
@@ -461,54 +439,62 @@ class Parser:
         init = self.parse_expr()
         self.expect("semicolon", "';'")
 
+        # Integer literal range check for 🐥 (i32)
+        if type_name == "🐥":
+            if isinstance(init, ConstNode):
+                val_int = int(init.val)
+                I32_MAX = 2147483647
+                if val_int > I32_MAX:
+                    compilation_error(
+                        init.line,
+                        init.col,
+                        f"integer literal {init.val} is out of range for 🐥 (i32 max 2147483647)",
+                    )
+
         return DeclNode(spec_tok.line, spec_tok.col, type_name, name_tok.text, mutable, init)
 
-    def parse_assignment(self):
+    def parse_assignment(self) -> AssignNode:
         var_tok = self.eat()  # ident
         self.expect("assignment", "'<-'")
         value = self.parse_expr()
         self.expect("semicolon", "';'")
         return AssignNode(var_tok.line, var_tok.col, var_tok.text, value)
 
-    def parse_exit(self):
-        exit_tok = self.eat()  # 'finish'
-        val = self.parse_operand(is_exit=True)
+    def parse_exit(self) -> ExitNode:
+        exit_tok = self.expect("statement", "'finish'")
+        val = self.parse_operand()
         self.expect("semicolon", "';'")
         return ExitNode(exit_tok.line, exit_tok.col, val)
 
-
-    def parse_arith(self):
+    def parse_arith(self) -> ExprNode:
         node = self.parse_term()
         while (tok := self.peek()) is not None and tok.kind == "operator" and tok.text in "+-":
             op_tok = self.eat()
             node = BinOpNode(op_tok.line, op_tok.col, op_tok.text, node, self.parse_term())
         return node
 
-    def parse_term(self):
+    def parse_term(self) -> ExprNode:
         node = self.parse_operand()
         while (tok := self.peek()) is not None and tok.kind == "operator" and tok.text in "*/":
             op_tok = self.eat()
             node = BinOpNode(op_tok.line, op_tok.col, op_tok.text, node, self.parse_operand())
         return node
 
-    def parse_expr(self):
+    def parse_expr(self) -> ExprNode:
         node = self.parse_arith()
         if (tok := self.peek()) is not None and tok.kind == "comparison":
             op_tok = self.eat()
             right = self.parse_arith()
             if (tok2 := self.peek()) is not None and tok2.kind == "comparison":
-                raise_err("multiple comparisons in one expression are not allowed", tok2.line, tok2.col)
+                compilation_error(tok2.line, tok2.col, "multiple comparisons in one expression are not allowed")
             return BinOpNode(op_tok.line, op_tok.col, op_tok.text, node, right)
         return node
 
-    def parse_operand(self, is_exit=False):
+    def parse_operand(self) -> ExprNode:
         tok = self.peek()
         if tok is None:
             line, col = self.get_pos_info()
-            if is_exit:
-                raise_err(7, line, col)
-            else:
-                raise_err("expected constant or variable, found end of file", line, col)
+            compilation_error(line, col, "expected constant or variable, found end of file")
 
         if tok.kind == "ident":
             self.eat()
@@ -518,7 +504,7 @@ class Parser:
             return ConstNode(tok.line, tok.col, tok.text)
         elif tok.kind == "bool_literal":
             self.eat()
-            is_true = (tok.text in ("🪺", "true", "full"))
+            is_true = (tok.text == "🪺")
             return BoolNode(tok.line, tok.col, is_true)
         elif tok.kind == "lparen":
             self.eat()
@@ -526,12 +512,9 @@ class Parser:
             self.expect("rparen", "')'")
             return expr
         else:
-            if is_exit:
-                raise_err(7, tok.line, tok.col)
-            else:
-                raise_err(f"expected constant or variable, got '{tok.text}'", tok.line, tok.col)
+            compilation_error(tok.line, tok.col, f"expected constant or variable, got '{tok.text}'")
 
-    def parse_if(self):
+    def parse_if(self) -> IfNode:
         if_tok = self.eat()  # '🐤'
         condition = self.parse_expr()
         then_block = self.parse_block()
@@ -544,67 +527,54 @@ class Parser:
 
         return IfNode(if_tok.line, if_tok.col, condition, then_block, else_block)
 
-    def parse_while(self):
+    def parse_while(self) -> WhileNode:
         while_tok = self.eat()  # 'waddle'
         condition = self.parse_expr()
         body_block = self.parse_block()
         return WhileNode(while_tok.line, while_tok.col, condition, body_block)
 
-    def parse_block(self):
+    def parse_block(self) -> BlockNode:
         lbrace_tok = self.expect("lbrace", "'🪶'")
         stmts = []
-        exit_node = None
-        has_exit = False
 
         while True:
             tok = self.peek()
             if tok is None:
-                raise_err("block opened here is never closed", lbrace_tok.line, lbrace_tok.col)
+                compilation_error(lbrace_tok.line, lbrace_tok.col, "'🪶' opened here is never closed")
             if tok.kind == "rbrace":
                 break
 
-            if tok.kind == "statement" and tok.text == "finish":
-                if has_exit:
-                    raise_err(6, tok.line, tok.col)
-                exit_node = self.parse_exit()
-                has_exit = True
+            if tok.text == "finish":
+                stmts.append(self.parse_exit())
             else:
-                if has_exit:
-                    raise_err(6, tok.line, tok.col)
-                stmt = self.parse_statement()
-                stmts.append(stmt)
-                if guarantees_exit(stmt):
-                    has_exit = True
+                stmts.append(self.parse_statement())
 
         self.expect("rbrace", "'🪽'")
 
-        if not stmts and exit_node is None:
-            raise_err("block must not be empty", lbrace_tok.line, lbrace_tok.col)
+        if not stmts:
+            compilation_error(lbrace_tok.line, lbrace_tok.col, "block must not be empty")
 
-        return BlockNode(lbrace_tok.line, lbrace_tok.col, stmts, exit_node)
+        return BlockNode(lbrace_tok.line, lbrace_tok.col, stmts)
 
 
+# ── Main Entrypoint ───────────────────────────────────────────────────
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("source_path", help="path to the .txt file with your code")
-    parser.add_argument("output_path", nargs="?", default=None, help="path to the .ll file")
-    parser.add_argument("--tokens", action="store_true", help="print the token stream to stdout")
-    parser.add_argument("--ast", action="store_true", help="print the AST tree and exit")
-    args = parser.parse_args()
+    if len(sys.argv) != 3 or sys.argv[1] != "--ast":
+        sys.stderr.write("Usage: python3 src/compiler.py --ast <input.txt>\n")
+        sys.exit(1)
 
-    with open(args.source_path, "rb") as f:
-        data = f.read()
+    source_path = sys.argv[2]
+    try:
+        with open(source_path, "rb") as f:
+            data = f.read()
+    except Exception as e:
+        sys.stderr.write(f"compilation error: line 1:1: cannot read file '{source_path}': {e}\n")
+        sys.exit(1)
 
-    lexer_lines = lex(data)
-    all_tokens = [tok for line in lexer_lines for tok in line]
-
-    if args.tokens:
-        for tok in all_tokens:
-            print(tok.to_str())
-    elif args.ast:
-        p = Parser(all_tokens)
-        ast_root = p.parse_program()
-        ast_root.dump()
+    tokens = lex(data)
+    p = Parser(tokens)
+    ast_root = p.parse_program()
+    ast_root.dump()
 
 
 if __name__ == "__main__":
