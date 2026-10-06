@@ -8,7 +8,8 @@ Program
     Block
       Exit
         Const 0
-  Else
     Block
       Exit
         Const 1
+  Exit
+    Const 3

@@ -1,0 +1,10 @@
+Program
+  If
+    Bool true
+    Block
+      Exit
+        Const 1
+      Decl x 🐥 mut
+        Const 2
+  Exit
+    Const 0

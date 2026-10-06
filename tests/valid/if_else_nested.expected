@@ -13,11 +13,11 @@ Program
         Block
           Exit
             Const 0
-      Else
         Block
           Exit
             Const 1
-  Else
     Block
       Exit
         Const 2
+  Exit
+    Const 3

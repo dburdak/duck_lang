@@ -1,0 +1,5 @@
+Program
+  Decl a 🦆 const
+    Const 10000000000
+  Exit
+    Var a

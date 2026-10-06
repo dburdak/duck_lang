@@ -1,0 +1,6 @@
+waddle 🪺 🪶
+    🐤 🪹 🪶
+        finish 1 ;
+    🪽
+🪽
+finish 0 ;
