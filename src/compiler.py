@@ -57,35 +57,33 @@ class Token:
         self.line = line
         self.col = col
 
-    def to_str(self):
-        return f"({self.kind}, {self.text}, {self.line}, {self.col})"
+# ── Type Limits Table ─────────────────────────────────────────────────
+I32_MAX = 2147483647
+I64_MAX = 9223372036854775807
+
+TYPE_LIMITS = {
+    "🐥": ("i32", I32_MAX),
+    "🦆": ("i64", I64_MAX),
+}
 
 
-def is_alpha(b):
-    if (ord("A") <= b <= ord("Z")) or (ord("a") <= b <= ord("z")) or b == ord("_"):
-        return True
-    return False
+def is_alpha(b: int) -> bool:
+    return (ord("A") <= b <= ord("Z")) or (ord("a") <= b <= ord("z")) or b == ord("_")
 
 
-def is_digit(b):
-    if ord("0") <= b <= ord("9"):
-        return True
-    return False
+def is_digit(b: int) -> bool:
+    return ord("0") <= b <= ord("9")
 
 
-def is_operator(b):
-    if b in (ord("*"), ord("/"), ord("+"), ord("-")):
-        return True
-    return False
+def is_operator(b: int) -> bool:
+    return b in (ord("*"), ord("/"), ord("+"), ord("-"))
 
 
-def lex(data: bytes):
-    lexer_lines, tokens = [], []
+def lex(data: bytes) -> List[Token]:
+    tokens: List[Token] = []
     line, col = 1, 1
     i = 0
     n = len(data)
-
-    I64_MAX = 9223372036854775807
 
     while i < n:
         b = data[i]
@@ -122,13 +120,6 @@ def lex(data: bytes):
                 compilation_error(line, col, f"unexpected byte '{char_disp}'")
             num_bytes = data[start:i]
             num_str = num_bytes.decode("ascii")
-            stripped = num_str.lstrip("0")
-            if len(stripped) > 19 or (len(stripped) > 0 and int(num_str) > I64_MAX):
-                compilation_error(
-                    line,
-                    start_col,
-                    f"integer literal {num_str} is out of range (exceeds i64 max {I64_MAX})",
-                )
             tokens.append(Token("constant", num_str, line, start_col))
         # Single-byte ASCII punctuation and operators
         elif b == ord("("):
@@ -204,30 +195,28 @@ def lex(data: bytes):
 
 
 # ── AST Node Hierarchy ────────────────────────────────────────────────
-class Node:
-    def __init__(self, line, col):
-        self.line, self.col = line, col
+class ASTNode:
+    def __init__(self, line: int, col: int):
+        self.line = line
+        self.col = col
 
 
-class ProgramNode(Node):
-    def __init__(self, line, col, stmts, exit_node):
+class ProgramNode(ASTNode):
+    def __init__(self, line: int, col: int, stmts: list):
         super().__init__(line, col)
         self.stmts = stmts
-        self.exit = exit_node
 
     def dump(self, indent=0):
         print(" " * indent + "Program")
         for stmt in self.stmts:
             stmt.dump(indent + 2)
-        if self.exit:
-            self.exit.dump(indent + 2)
 
 
-class StmtNode(Node):
+class StmtNode(ASTNode):
     pass
 
 
-class ExprNode(Node):
+class ExprNode(ASTNode):
     pass
 
 
@@ -296,7 +285,7 @@ class BoolNode(ExprNode):
         print(" " * indent + f"Bool {'true' if self.val else 'false'}")
 
 
-class BlockNode(Node):
+class BlockNode(ASTNode):
     def __init__(self, line: int, col: int, stmts: list):
         super().__init__(line, col)
         self.stmts = stmts
@@ -342,6 +331,14 @@ class ExitNode(StmtNode):
     def dump(self, indent=0):
         print(" " * indent + "Exit")
         self.val.dump(indent + 2)
+
+
+def literal_exceeds(text: str, max_val: int) -> bool:
+    digits = text.lstrip("0") or "0"
+    max_str = str(max_val)
+    if len(digits) != len(max_str):
+        return len(digits) > len(max_str)
+    return digits > max_str
 
 
 # ── Parser ────────────────────────────────────────────────────────────
@@ -441,16 +438,15 @@ class Parser:
         init = self.parse_expr()
         self.expect("semicolon", "';'")
 
-        # Integer literal range check for 🐥 (i32)
-        if type_name == "🐥":
+        # Integer literal range check for 🐥 (i32) and 🦆 (i64)
+        if type_name in TYPE_LIMITS:
+            type_label, limit_val = TYPE_LIMITS[type_name]
             if isinstance(init, ConstNode):
-                val_int = int(init.val)
-                I32_MAX = 2147483647
-                if val_int > I32_MAX:
+                if literal_exceeds(init.val, limit_val):
                     compilation_error(
                         init.line,
                         init.col,
-                        f"integer literal {init.val} is out of range for 🐥 (i32 max 2147483647)",
+                        f"integer literal {init.val} is out of range for {type_name} ({type_label} max {limit_val})",
                     )
 
         return DeclNode(spec_tok.line, spec_tok.col, type_name, name_tok.text, mutable, init)
