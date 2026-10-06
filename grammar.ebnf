@@ -12,7 +12,8 @@ if ::= "🐤" expr block [ "🦢" block ]
 
 while ::= "waddle" expr block
 
-block ::= "🪶" statement { statement } "🪽"
+block      ::= "🪶" block_item { block_item } "🪽"
+block_item ::= statement | finish
 
 type ::= "🐥" | "🦆" | "🥚"
 
@@ -23,3 +24,8 @@ expr ::= arith [ ( "≡" | "≢" ) arith ]
 arith ::= term { ("+" | "-") term }
 
 term ::= operand { ( "*" | "/" ) operand }
+
+ident      ::= ( letter | "_" ) { letter | digit | "_" }
+letter     ::= "a" | ... | "z" | "A" | ... | "Z"
+digit      ::= "0" | ... | "9"
+number     ::= digit { digit }
