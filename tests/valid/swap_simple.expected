@@ -1,0 +1,8 @@
+Program
+  Decl a 🐥 mut
+    Const 1
+  Decl b 🐥 mut
+    Const 2
+  Swap a b
+  Exit
+    Const 0
