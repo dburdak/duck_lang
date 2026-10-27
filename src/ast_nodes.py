@@ -134,3 +134,23 @@ class ExitNode(StmtNode):
     def dump(self, indent=0):
         print(" " * indent + "Exit")
         self.val.dump(indent + 2)
+
+
+class SwapStmtNode(StmtNode):
+    def __init__(self, line: int, col: int, targets: list):
+        super().__init__(line, col)
+        self.targets = targets
+
+    def dump(self, indent=0):
+        print(" " * indent + f"Swap {' '.join(self.targets)}")
+
+
+class PrintStmtNode(StmtNode):
+    def __init__(self, line: int, col: int, expr: ExprNode):
+        super().__init__(line, col)
+        self.expr = expr
+
+    def dump(self, indent=0):
+        print(" " * indent + "Print")
+        self.expr.dump(indent + 2)
+
