@@ -8,24 +8,26 @@
 
 ## 📋 Emoji & Keyword Mapping (UTF-8)
 
-| Вимога з ТЗ | Конструкція Duck Lang | Emoji / Symbol | Code Point | UTF-8 Hex Bytes |
-| --- | --- | --- | --- | --- |
-| **Integer (32-bit)** | Typename | 🐥 | `U+1F425` | `0xF0 0x9F 0x90 0xA5` |
-| **Integer (64-bit)** | Typename | 🦆 | `U+1F986` | `0xF0 0x9F 0xA6 0x86` |
-| **Boolean type** | Typename | 🥚 | `U+1F95A` | `0xF0 0x9F 0xA5 0x9A` |
-| **Boolean true** | Bool literal | 🪺 | `U+1FABA` | `0xF0 0x9F 0xAA 0xBA` |
-| **Boolean false** | Bool literal | 🪹 | `U+1FAB9` | `0xF0 0x9F 0xAA 0xB9` |
-| **Mutable variable** | Specifier | 🍃 | `U+1F343` | `0xF0 0x9F 0x8D 0x83` |
-| **Constant (immutable)** | Specifier | 🪨 | `U+1FAA8` | `0xF0 0x9F 0xAA 0xA8` |
-| **Assignment** | Operator | `<-` | ASCII | `0x3C 0x2D` |
-| **Comparison (Equal)** | Comparison | `≡` | `U+2261` | `0xE2 0x89 0xA1` |
-| **Comparison (Not Eq)** | Comparison | `≢` | `U+2262` | `0xE2 0x89 0xA2` |
-| **If Keyword** | Keyword | 🐤 | `U+1F424` | `0xF0 0x9F 0x90 0xA4` |
-| **Else Keyword** | Keyword | 🦢 | `U+1F9A2` | `0xF0 0x9F 0xA6 0xA2` |
-| **While Keyword** | Keyword | `waddle` | ASCII | `0x77 0x61 0x64 0x64 0x6C 0x65` |
-| **Finish Statement** | Statement | `finish` | ASCII | `0x66 0x69 0x6E 0x69 0x73 0x68` |
-| **Block Open** | Lbrace | 🪶 | `U+1FAB6` | `0xF0 0x9F 0xAA 0xB6` |
-| **Block Close** | Rbrace | 🪽 | `U+1FABD` | `0xF0 0x9F 0xAA 0xBD` |
+| Вимога з ТЗ | Конструкція Duck Lang | Emoji / Symbol | Text Synonym | Code Point | UTF-8 Hex Bytes |
+| --- | --- | --- | --- | --- | --- |
+| **Integer (32-bit)** | Typename | 🐥 | `duck32` | `U+1F425` | `0xF0 0x9F 0x90 0xA5` |
+| **Integer (64-bit)** | Typename | 🦆 | `duck64` | `U+1F986` | `0xF0 0x9F 0xA6 0x86` |
+| **Boolean type** | Typename | 🥚 | `pond_bool` | `U+1F95A` | `0xF0 0x9F 0xA5 0x9A` |
+| **Boolean true** | Bool literal | 🪺 | `nest_full` | `U+1FABA` | `0xF0 0x9F 0xAA 0xBA` |
+| **Boolean false** | Bool literal | 🪹 | `nest_empty` | `U+1FAB9` | `0xF0 0x9F 0xAA 0xB9` |
+| **Mutable variable** | Specifier | 🍃 | `hatch` / `leaf` | `U+1F343` | `0xF0 0x9F 0x8D 0x83` |
+| **Constant (immutable)** | Specifier | 🪨 | `stone` / `rock` | `U+1FAA8` | `0xF0 0x9F 0xAA 0xA8` |
+| **Assignment** | Operator | `<-` | `<-` | ASCII | `0x3C 0x2D` |
+| **Swap** | Operator | 🔀 | `swap` | `U+1F500` | `0xF0 0x9F 0x94 0x80` |
+| **Print Statement** | Statement | 🔊 | `quack` | `U+1F50A` | `0xF0 0x9F 0x94 0x8A` |
+| **Comparison (Equal)** | Comparison | ≡ | `eq` | `U+2261` | `0xE2 0x89 0xA1` |
+| **Comparison (Not Eq)** | Comparison | ≢ | `neq` | `U+2262` | `0xE2 0x89 0xA2` |
+| **If Keyword** | Keyword | 🐤 | `peck` | `U+1F424` | `0xF0 0x9F 0x90 0xA4` |
+| **Else Keyword** | Keyword | 🦢 | `swan` | `U+1F9A2` | `0xF0 0x9F 0xA6 0xA2` |
+| **While Keyword** | Keyword | 🔁 | `waddle` | `U+1F501` | `0xF0 0x9F 0x94 0x81` |
+| **Finish Statement** | Statement | 🏁 | `finish` / `fly` | `U+1F3C1` | `0xF0 0x9F 0x8F 0x81` |
+| **Block Open** | Lbrace | 🪶 | `feather` | `U+1FAB6` | `0xF0 0x9F 0xAA 0xB6` |
+| **Block Close** | Rbrace | 🪽 | `wing` | `U+1FABD` | `0xF0 0x9F 0xAA 0xBD` |
 
 ---
 
@@ -33,16 +35,16 @@
 
 ### 1. Types
 Duck Lang supports three data types:
-- `🐥` — 32-bit Integer (`i32`, range: $-2^{31}$ to $2^{31}-1$, max $2147483647$)
-- `🦆` — 64-bit Integer (`i64`, range: $-2^{63}$ to $2^{63}-1$, max $9223372036854775807$)
-- `🥚` — Boolean (`bool`)
+- `🐥` / `duck32` — 32-bit Integer (`i32`, range: $-2^{31}$ to $2^{31}-1$, max $2147483647$)
+- `🦆` / `duck64` — 64-bit Integer (`i64`, range: $-2^{63}$ to $2^{63}-1$, max $9223372036854775807$)
+- `🥚` / `pond_bool` — Boolean (`bool`)
 
 **Boolean Literals:**
-- `🪺` — `true` (Full Nest)
-- `🪹` — `false` (Empty Nest)
+- `🪺` / `nest_full` — `true` (Full Nest)
+- `🪹` / `nest_empty` — `false` (Empty Nest)
 
 ### 2. Variable Declarations
-Variables are declared as either **mutable** (`🍃`) or **immutable/constant** (`🪨`):
+Variables are declared as either **mutable** (`🍃` / `hatch`) or **immutable/constant** (`🪨` / `stone`):
 ```duck
 🍃 count : 🐥 <- 10 ;
 🪨 max_limit : 🦆 <- 9223372036854775807 ;
@@ -50,17 +52,30 @@ Variables are declared as either **mutable** (`🍃`) or **immutable/constant** 
 finish 0 ;
 ```
 
-### 3. Assignment
-Values of existing variables are updated using the `<-` assignment operator:
+### 3. Assignment & Swap Statements
+- **Assignment (`<-`):**
+  ```duck
+  🍃 count : 🐥 <- 0 ;
+  count <- count + 1 ;
+  ```
+- **Swap & Rotation (`🔀` / `swap`):**
+  Swap two variables or rotate multiple variables:
+  ```duck
+  a 🔀 b ;
+  a 🔀 b 🔀 c ;
+  ```
+  In a chained swap `a 🔀 b 🔀 c ;`, values rotate: `a` gets `b`, `b` gets `c`, and `c` gets the previous value of `a`.
+
+### 4. Print Statement (`🔊` / `quack`)
+Outputs the result of an expression:
 ```duck
-🍃 count : 🐥 <- 0 ;
-count <- count + 1 ;
-finish count ;
+🔊 count + 1 ;
+quack flag ;
 ```
 
-### 4. Expressions & Operators
+### 5. Expressions & Operators
 - **Arithmetic Operators:** `+`, `-`, `*`, `/`
-- **Comparison Operators:** `≡` (equal), `≢` (not equal)
+- **Comparison Operators:** `≡` / `eq` (equal), `≢` / `neq` (not equal)
 - **Parentheses:** `(` and `)` for grouping expressions.
 
 Example:
@@ -70,9 +85,9 @@ Example:
 finish 0 ;
 ```
 
-### 5. Control Flow
-- `🐤` ... `🪶` ... `🪽` `🦢` — `if` / `else` conditional blocks (`🪶` opens a block, `🪽` closes a block)
-- `waddle` ... `🪶` ... `🪽` — `while` loop
+### 6. Control Flow
+- `🐤` / `peck` ... `🪶` ... `🪽` `🦢` / `swan` — `if` / `else` conditional blocks (`🪶` / `feather` opens, `🪽` / `wing` closes)
+- `🔁` / `waddle` ... `🪶` ... `🪽` — `while` loop
 
 Example:
 ```duck
