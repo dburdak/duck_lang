@@ -1,0 +1,5 @@
+hatch add (left : 🐥, right : 🐥) -> 🐥 🪶
+    lay left + right ;
+🪽
+🍃 result : 🐥 <- add(1) ;
+finish 0 ;

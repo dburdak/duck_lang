@@ -1,0 +1,8 @@
+flock Pair 🪶
+    🍃 first : 🐥;
+    🍃 second : 🐥;
+🪽
+🍃 pair : Pair <- Pair { first: 3, second: 8 };
+pair.first 🔀 pair.second ;
+🔊 pair ;
+finish 0 ;

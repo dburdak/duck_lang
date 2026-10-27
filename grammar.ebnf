@@ -1,32 +1,113 @@
-program ::= { statement } finish
+program ::= { top_item } finish
 
-finish ::= "finish" operand ";"
+top_item ::= func_decl | struct_decl | statement
 
-statement ::= var_decl | assignment | if | while
+func_decl ::= "hatch" ident "(" [ params ] ")" "->" type block
 
-var_decl ::= ( "🍃" | "🪨" ) ident ":" type "<-" expr ";"
+params ::= param { "," param }
 
-assignment ::= ident "<-" expr ";"
+param ::= ident ":" type
 
-if ::= "🐤" expr block [ "🦢" block ]
+struct_decl ::= "flock" ident "🪶" { member } "🪽"
 
-while ::= "waddle" expr block
+member ::= field_decl | member_func_decl
 
-block ::= "🪶" block_item { block_item } "🪽"
+field_decl ::= member_specifier ident ":" type ";"
+
+member_func_decl ::= member_specifier "hatch" ident "(" [ params ] ")" "->" type block
+
+member_specifier ::= "🍃" | "🪨" | "leaf" | "hatch" | "stone" | "rock"
+
+statement ::= var_decl | simple_stmt | if_stmt | while_stmt | print_stmt | return_stmt
+
+var_decl ::= specifier ident ":" type "<-" expr ";"
+
+specifier ::= "🍃" | "leaf" | "hatch" | "🪨" | "stone" | "rock"
+
+simple_stmt ::= assignable [ "<-" expr | swap_tail ] ";" | postfix ";"
+
+assignable ::= ident { "." ident }
+
+swap_tail ::= swap_op assignable { swap_op assignable }
+
+swap_op ::= "🔀" | "swap"
+
+print_stmt ::= "🔊" ( string | expr ) ";"
+
+return_stmt ::= "lay" expr ";"
+
+if_stmt ::= if_keyword expr block [ else_keyword block ]
+
+if_keyword ::= "🐤" | "peck"
+
+else_keyword ::= "🦢" | "swan"
+
+while_stmt ::= while_keyword expr block
+
+while_keyword ::= "🔁" | "waddle"
+
+block ::= block_open block_item { block_item } block_close
 
 block_item ::= statement | finish
 
-type ::= "🐥" | "🦆" | "🥚"
+block_open ::= "🪶" | "feather"
 
-operand ::= ident | number | "🪺" | "🪹" | "(" expr ")"
+block_close ::= "🪽" | "wing"
 
-expr ::= arith [ ( "≡" | "≢" ) arith ]
+finish ::= finish_keyword expr ";"
+
+finish_keyword ::= "🏁" | "finish" | "fly"
+
+type ::= "🐥" | "duck32" | "🦆" | "duck64" | "🥚" | "pond_bool" | ident
+
+bool_literal ::= "🪺" | "nest_full" | "🪹" | "nest_empty"
+
+expr ::= arith [ cmp_op arith ]
 
 arith ::= term { ("+" | "-") term }
 
-term ::= operand { ( "*" | "/" ) operand }
+term ::= postfix { ("*" | "/") postfix }
 
-ident      ::= ( letter | "_" ) { letter | digit | "_" }
-letter     ::= "a" | ... | "z" | "A" | ... | "Z"
-digit      ::= "0" | ... | "9"
-number     ::= digit { digit }
+postfix ::= primary { "." ident | call_suffix }
+
+call_suffix ::= "(" [ arguments ] ")"
+
+primary ::= ident | number | bool_literal | string | "(" expr ")" | object_creation | read_expr
+
+arguments ::= expr { "," expr }
+
+object_creation ::= ident "{" object_field { "," object_field } "}"
+
+object_field ::= ident ":" expr
+
+read_expr ::= ( "👂" | "read" ) type
+
+cmp_op ::= "≡" | "eq" | "≢" | "neq"
+
+string ::= "\"" { string_char | escape } "\""
+
+string_char ::= ? any character except quotation mark, backslash, and line break ?
+
+escape ::= "\\" ? any character except line break ?
+
+ident ::= ( letter | "_" ) { letter | digit | "_" }
+
+letter ::= "a" | ... | "z" | "A" | ... | "Z"
+
+digit ::= "0" | ... | "9"
+
+number ::= digit { digit }
+
+whitespace ::= " " | "\t" | "\r" | "\n"
+
+(* Whitespace may appear between tokens. The lexer does not support comments. *)
+(* A block must contain at least one block_item; empty blocks are rejected. *)
+(* `hatch` is both a variable specifier and a function keyword. The parser
+   recognizes `hatch ident (` as a function declaration by lookahead. *)
+(* Assignment and swap require assignable targets; a postfix statement is
+   valid only when it ends in a function or member-function call. *)
+
+(* Text keyword synonyms:
+   duck32/duck64/pond_bool, leaf/hatch/stone/rock, nest_full/nest_empty,
+   peck/swan/waddle, feather/wing, finish/fly, swap, quack, eq/neq,
+   flock/lay/read. *)

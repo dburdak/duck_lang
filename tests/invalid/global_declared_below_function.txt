@@ -1,0 +1,5 @@
+hatch get_score () -> 🐥 🪶
+    lay score ;
+🪽
+🍃 score : 🐥 <- 23 ;
+finish 0 ;

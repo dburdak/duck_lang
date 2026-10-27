@@ -1,0 +1,4 @@
+hatch value () -> 🐥 🪶
+    lay 🪺 ;
+🪽
+finish 0 ;

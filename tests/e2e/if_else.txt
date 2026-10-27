@@ -1,0 +1,7 @@
+🍃 value : 🐥 <- 2 ;
+🐤 value ≡ 1 🪶
+    🔊 "one" ;
+🪽 🦢 🪶
+    🔊 "other" ;
+🪽
+finish 0 ;

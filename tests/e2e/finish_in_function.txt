@@ -1,0 +1,7 @@
+hatch stop () -> 🐥 🪶
+    🔊 "stopped" ;
+    finish 0 ;
+    lay 1 ;
+🪽
+stop() ;
+finish 2 ;

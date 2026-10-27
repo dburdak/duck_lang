@@ -1,0 +1,8 @@
+hatch caller () -> 🐥 🪶
+    🍃 caller_local : 🐥 <- 1 ;
+    lay callee() ;
+🪽
+hatch callee () -> 🐥 🪶
+    lay caller_local ;
+🪽
+finish 0 ;

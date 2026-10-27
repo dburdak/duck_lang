@@ -1,0 +1,14 @@
+🍃 base : 🐥 <- 4 ;
+hatch calculate (input : 🐥) -> 🐥 🪶
+    🍃 local : 🐥 <- input + base ;
+    🍃 box : Box <- Box { value: local };
+    lay helper(box.value) ;
+🪽
+hatch helper (value : 🐥) -> 🐥 🪶
+    lay value + 1 ;
+🪽
+flock Box 🪶
+    🍃 value : 🐥;
+🪽
+🔊 calculate(3) ;
+finish 0 ;
