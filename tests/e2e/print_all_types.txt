@@ -1,0 +1,9 @@
+flock Point 🪶
+    🍃 x : 🐥;
+    🍃 y : 🐥;
+🪽
+🔊 7 ;
+🔊 🪺 ;
+🔊 "hello" ;
+🔊 Point { x: 3, y: 4 } ;
+finish 0 ;

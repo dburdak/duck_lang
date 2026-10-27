@@ -1,0 +1,8 @@
+🍃 shade : 🐥 <- 1 ;
+flock Bird 🪶
+    🪨 shade : 🥚;
+    🪨 hatch read_shade () -> 🐥 🪶
+        lay shade ;
+    🪽
+🪽
+finish 0 ;

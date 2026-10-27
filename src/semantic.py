@@ -103,7 +103,6 @@ class SemanticAnalyzer:
         self.current_struct = None
         self.return_type = None
         self.in_global_scope = False
-        self.item_positions = {}
         self.global_positions = {}
         self.current_item_position = None
 
@@ -114,7 +113,6 @@ class SemanticAnalyzer:
         self.collect_declarations()
         self.analyze_globals()
         for index, item in enumerate(self.program.items):
-            self.item_positions[id(item)] = index
             if isinstance(item, FunctionNode):
                 self.analyze_function(item, item_position=index)
             elif isinstance(item, StructNode):

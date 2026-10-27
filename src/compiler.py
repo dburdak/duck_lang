@@ -18,8 +18,8 @@ def compile_file(source_path, mode):
     try:
         with open(source_path, "rb") as f:
             data = f.read()
-    except Exception as e:
-        sys.stderr.write(f"compilation error: line 1:1: cannot read file '{source_path}': {e}\n")
+    except OSError:
+        sys.stderr.write("compilation error: line 1:1: cannot read input file\n")
         sys.exit(1)
 
     tokens = lex(data)
@@ -51,22 +51,28 @@ def main(argv=None):
     if len(args) == 2 and args[0] in ("--ast", "--ir"):
         mode, source_path = args
         output_path = None
+    elif len(args) == 2 and args[0].startswith("--"):
+        sys.stderr.write(usage)
+        return 1
     elif len(args) == 2:
         mode, source_path, output_path = "--output", args[0], args[1]
     else:
         sys.stderr.write(usage)
         return 1
 
+    if output_path is not None:
+        if os.path.abspath(source_path) == os.path.abspath(output_path):
+            compilation_error(1, 1, "input and output paths must be different")
+        try:
+            os.remove(output_path)
+        except FileNotFoundError:
+            pass
+        except OSError:
+            sys.stderr.write("compilation error: line 1:1: cannot clear output file\n")
+            return 1
+
     temporary_path = None
     try:
-        if output_path is not None:
-            if os.path.abspath(source_path) == os.path.abspath(output_path):
-                compilation_error(1, 1, "input and output paths must be different")
-            try:
-                os.remove(output_path)
-            except FileNotFoundError:
-                pass
-
         ir_text = compile_file(source_path, mode)
         if mode == "--ir":
             sys.stdout.write(ir_text)
@@ -83,11 +89,6 @@ def main(argv=None):
     except RecursionError:
         sys.stderr.write("compilation error: line 1:1: nesting is too deep\n")
     except SystemExit as error:
-        if error.code not in (None, 0) and output_path is not None:
-            try:
-                os.remove(output_path)
-            except FileNotFoundError:
-                pass
         return error.code if isinstance(error.code, int) else 1
     except Exception:
         sys.stderr.write("compilation error: line 1:1: unexpected compiler error\n")
@@ -97,11 +98,6 @@ def main(argv=None):
                 os.remove(temporary_path)
             except FileNotFoundError:
                 pass
-    if output_path is not None:
-        try:
-            os.remove(output_path)
-        except FileNotFoundError:
-            pass
     return 1
 
 

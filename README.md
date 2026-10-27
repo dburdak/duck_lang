@@ -18,7 +18,7 @@ These rules are checked at compile time unless a rule describes runtime output:
 6. Every `🔀` target MUST be an assignable variable or field. A function or method call result is a temporary, not an lvalue, and cannot be a swap target.
 7. Printing an object outputs `TypeName { field: value, ... }`, with fields in declaration order and a trailing newline. Nested objects use the same format.
 
-### 1. Call Argument Count and Types
+### Call Argument Count and Types
 
 **Valid:**
 ```duck
@@ -55,7 +55,7 @@ finish 0 ;
 ```
 Expected: compilation errors because `add` requires two `🐥` arguments and `sum` requires two `🐥` arguments.
 
-### 2. Return Expression Type
+### Return Expression Type
 
 **Valid:**
 ```duck
@@ -74,11 +74,11 @@ finish 0 ;
 ```
 Expected: compilation error because the returned value is `🥚`, not `🐥`.
 
-### 3. Member-Function Name Lookup
+### Member-Function Name Lookup
 
-**Valid — the parameter shadows the field, and the field shadows the global:**
+**Valid — the parameter shadows the field, the field shadows the global, and a local shadows the field:**
 ```duck
-🍃 score : 🐥 <- 100 ;
+🍃 score : 🐥 <- 30 ;
 flock Bird 🪶
     🍃 score : 🐥;
     🪨 hatch parameter_wins (score : 🐥) -> 🐥 🪶
@@ -87,9 +87,20 @@ flock Bird 🪶
     🪨 hatch field_wins () -> 🐥 🪶
         lay score ;
     🪽
+    🪨 hatch local_wins () -> 🐥 🪶
+        🍃 score : 🐥 <- 99 ;
+        score <- score + 1 ;
+        lay score ;
+    🪽
 🪽
+🍃 bird : Bird <- Bird { score: 20 };
+🔊 bird.parameter_wins(10) ;
+🔊 bird.local_wins() ;
+🔊 bird.field_wins() ;
+🔊 score ;
 finish 0 ;
 ```
+The output is `10`, `100`, `20`, `30` on separate lines. The assignment in `local_wins` changes its local `score`, not the field.
 
 **Invalid — `shade` is a `🥚` field, so it is selected before the `🐥` global:**
 ```duck
@@ -104,7 +115,7 @@ finish 0 ;
 ```
 Expected: compilation error because `lay shade;` resolves to the field of type `🥚`, which does not match the return type `🐥`.
 
-### 4. Member-Function Mutability
+### Member-Function Mutability
 
 **Valid — call a mutating method on a mutable object; a constant method reads its field:**
 ```duck
@@ -156,7 +167,7 @@ finish 0 ;
 ```
 Expected: compilation error because the constant method calls a mutating method; removing that call still leaves an invalid field assignment.
 
-### 5. Mutability Through a Field Chain
+### Mutability Through a Field Chain
 
 **Valid — the base object and each field in the chain are mutable:**
 ```duck
@@ -187,7 +198,7 @@ finish 0 ;
 ```
 Expected: compilation errors because `outer.inner` is not mutable and `fixed` is an immutable base object.
 
-### 6. Swap Targets
+### Swap Targets
 
 **Valid — both targets are assignable locations:**
 ```duck
@@ -208,7 +219,7 @@ finish 0 ;
 ```
 Expected: compilation error because a function-call result is not an assignable swap target.
 
-### 7. Object Printing
+### Object Printing
 
 **Valid — output is `Point { x: 3, y: 4 }` followed by a newline:**
 ```duck
@@ -221,12 +232,12 @@ flock Point 🪶
 finish 0 ;
 ```
 
-**Invalid — an undeclared name is not a printable object:**
+**Invalid — the printed expression has incompatible arithmetic operands, so it has no printable value type:**
 ```duck
-🔊 missing ;
+🔊 🪺 + 1 ;
 finish 0 ;
 ```
-Expected: compilation error because `missing` is undeclared.
+Expected: compilation error because arithmetic requires operands of the same integer type; print is not reached with a valid expression.
 
 ## 🧩 Stage 2 Syntax Overview
 
@@ -280,11 +291,64 @@ flock Counter 🪶
 🔊 "A string literal" ;
 ```
 
+Every `🔊` call appends exactly one trailing newline, including when printing integers, booleans (`true`/`false`), strings, and objects. For example:
+```duck
+🔊 7 ;
+🔊 🪺 ;
+🔊 "hello" ;
+flock Point 🪶
+    🍃 x : 🐥;
+🪽
+🔊 Point { x: 3 } ;
+```
+This prints `7\n`, `true\n`, `hello\n`, and `Point { x: 3 }\n`, respectively.
+
+### Тіло звичайної функції
+
+A regular function sees its parameters, its own locals after their declarations, and global variables declared earlier in the source than that function. It can call any function and use any structure declared anywhere in the program, including declarations later in the source. It cannot see local variables of its caller; function bodies do not inherit the caller's scope.
+
+A global declared below a function is not visible in that function:
+```duck
+hatch read_later () -> 🐥 🪶
+    lay later ;
+🪽
+🍃 later : 🐥 <- 4 ;
+```
+Expected: `undeclared name 'later'` at its use in `read_later`.
+
+**Valid — the parameter, local, earlier global, later function, and later structure are all visible:**
+```duck
+🍃 base : 🐥 <- 4 ;
+hatch calculate (input : 🐥) -> 🐥 🪶
+    🍃 local : 🐥 <- input + base ;
+    🍃 box : Box <- Box { value: local };
+    lay helper(box.value) ;
+🪽
+hatch helper (value : 🐥) -> 🐥 🪶
+    lay value + 1 ;
+🪽
+flock Box 🪶
+    🍃 value : 🐥;
+🪽
+```
+
+**Invalid — a callee cannot resolve a local declared only by its caller:**
+```duck
+hatch caller () -> 🐥 🪶
+    🍃 caller_local : 🐥 <- 1 ;
+    lay callee() ;
+🪽
+hatch callee () -> 🐥 🪶
+    lay caller_local ;
+🪽
+```
+Expected: `undeclared name 'caller_local'` at its use in `callee`.
+
 ---
 
 ## 📋 Emoji & Keyword Mapping (UTF-8)
 
-| Вимога з ТЗ | Конструкція Duck Lang | Emoji / Symbol | Text Synonym | Code Point | UTF-8 Hex Bytes |
+| Requirement | Duck Lang construct | Emoji / Symbol | Text synonym | Code point | UTF-8 hex bytes |
 | --- | --- | --- | --- | --- | --- |
 | **Integer (32-bit)** | Typename | 🐥 | `duck32` | `U+1F425` | `0xF0 0x9F 0x90 0xA5` |
 | **Integer (64-bit)** | Typename | 🦆 | `duck64` | `U+1F986` | `0xF0 0x9F 0xA6 0x86` |
@@ -385,7 +449,7 @@ waddle x ≢ 10 🪶
 finish x ;
 ```
 
-### 6. Program Completion (`finish`)
+### 7. Program Completion (`finish`)
 - Every program MUST end with a top-level `finish` statement followed by an integer expression and `;`.
 - No statements are allowed after the final top-level `finish`.
 - `finish` statements may also be placed inside blocks (`🪶` ... `🪽`).
@@ -416,7 +480,7 @@ In Duck Lang (Stage 1), integer literal bounds are checked at the parser level d
 
 ## ⚠️ Stage 2 Integer and Arithmetic Checks
 
-During `--ir` semantic analysis, an integer literal used outside the Stage 1 bare-initializer check is assigned its contextual `🐥` or `🦆` type and MUST fit that type's positive range. Signed addition, subtraction, and multiplication use LLVM overflow intrinsics; division checks for zero and the signed minimum divided by `-1`. A runtime arithmetic overflow or invalid division calls the C `abort()` function.
+During semantic analysis, a nonnegative integer literal is assigned its contextual `🐥` or `🦆` type and must be in the range `0` through that type's maximum (`2147483647` for `🐥`, `9223372036854775807` for `🦆`). Negative values are written as `0 - n`, and the resulting subtraction is checked at runtime. Signed addition, subtraction, and multiplication use LLVM overflow intrinsics; division checks for zero and the signed minimum divided by `-1`. A runtime arithmetic overflow or invalid division calls the C `abort()` function.
 
 ## ⚙ Lexer & Parser Architecture
 
@@ -450,6 +514,8 @@ clang program.ll -o program
 ```
 
 `--ir input.txt` remains available as a legacy form that writes IR to standard output.
+
+`hatch` is both the function-declaration keyword and a text synonym for the mutable-variable specifier `🍃`. At the top level, the parser treats `hatch ident (` as a function declaration; otherwise it parses `hatch` as a variable specifier.
 
 Functions are emitted with a `duck_fn_` prefix; member functions use `duck_method_<Struct>_<name>`. Structures are identified LLVM types, and fields use their declaration-order index for `getelementptr`. Runtime input and output use `scanf` and `printf`.
 

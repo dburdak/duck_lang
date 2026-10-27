@@ -9,5 +9,21 @@ Program
             Const 1
         Return
           Var value
+    MemberFunction update_local -> 🐥 const assigns_field=False
+      Block
+        Decl local Counter mut
+          ObjectCreate Counter
+            Initializer value
+              Const 1
+        Assign Field
+          FieldAccess value
+            Var local
+          BinOp +
+            FieldAccess value
+              Var local
+            Const 1
+        Return
+          FieldAccess value
+            Var local
   Exit
     Const 0

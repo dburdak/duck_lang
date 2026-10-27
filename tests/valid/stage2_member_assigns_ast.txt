@@ -4,5 +4,10 @@ flock Counter 🪶
         value <- value + 1 ;
         lay value ;
     🪽
+    🪨 hatch update_local () -> 🐥 🪶
+        🍃 local : Counter <- Counter { value: 1 };
+        local.value <- local.value + 1 ;
+        lay local.value ;
+    🪽
 🪽
 finish 0 ;

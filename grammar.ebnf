@@ -12,17 +12,19 @@ struct_decl ::= "flock" ident "🪶" { member } "🪽"
 
 member ::= field_decl | member_func_decl
 
-field_decl ::= ( "🍃" | "🪨" ) ident ":" type ";"
+field_decl ::= member_specifier ident ":" type ";"
 
-member_func_decl ::= ( "🍃" | "🪨" ) "hatch" ident "(" [ params ] ")" "->" type block
+member_func_decl ::= member_specifier "hatch" ident "(" [ params ] ")" "->" type block
 
-statement ::= var_decl | simple_stmt | if | while | print | return_stmt
+member_specifier ::= "🍃" | "🪨" | "leaf" | "hatch" | "stone" | "rock"
+
+statement ::= var_decl | simple_stmt | if_stmt | while_stmt | print_stmt | return_stmt
 
 var_decl ::= specifier ident ":" type "<-" expr ";"
 
 specifier ::= "🍃" | "leaf" | "hatch" | "🪨" | "stone" | "rock"
 
-simple_stmt ::= postfix [ "<-" expr | swap_tail ] ";"
+simple_stmt ::= assignable [ "<-" expr | swap_tail ] ";" | postfix ";"
 
 assignable ::= ident { "." ident }
 
@@ -30,51 +32,82 @@ swap_tail ::= swap_op assignable { swap_op assignable }
 
 swap_op ::= "🔀" | "swap"
 
-print ::= "🔊" ( string | expr ) ";"
-
-string ::= "\"" { string_char } "\""
-
-string_char ::= ? any character except quotation mark, backslash, and line break ? | escape
-
-escape ::= "\\" ? any character except line break ?
+print_stmt ::= "🔊" ( string | expr ) ";"
 
 return_stmt ::= "lay" expr ";"
 
-if ::= ( "🐤" | "peck" ) expr block [ ( "🦢" | "swan" ) block ]
+if_stmt ::= if_keyword expr block [ else_keyword block ]
 
-while ::= ( "🔁" | "waddle" ) expr block
+if_keyword ::= "🐤" | "peck"
 
-block ::= ( "🪶" | "feather" ) block_item { block_item } ( "🪽" | "wing" )
+else_keyword ::= "🦢" | "swan"
+
+while_stmt ::= while_keyword expr block
+
+while_keyword ::= "🔁" | "waddle"
+
+block ::= block_open block_item { block_item } block_close
 
 block_item ::= statement | finish
 
-finish ::= ( "finish" | "fly" | "🏁" ) expr ";"
+block_open ::= "🪶" | "feather"
+
+block_close ::= "🪽" | "wing"
+
+finish ::= finish_keyword expr ";"
+
+finish_keyword ::= "🏁" | "finish" | "fly"
 
 type ::= "🐥" | "duck32" | "🦆" | "duck64" | "🥚" | "pond_bool" | ident
 
 bool_literal ::= "🪺" | "nest_full" | "🪹" | "nest_empty"
 
-operand ::= ident | number | bool_literal | "(" expr ")"
-
 expr ::= arith [ cmp_op arith ]
 
 arith ::= term { ("+" | "-") term }
 
-term ::= postfix { ( "*" | "/" ) postfix }
+term ::= postfix { ("*" | "/") postfix }
 
-postfix ::= primary { "." ident | "(" [ arguments ] ")" }
+postfix ::= primary { "." ident | call_suffix }
+
+call_suffix ::= "(" [ arguments ] ")"
 
 primary ::= ident | number | bool_literal | string | "(" expr ")" | object_creation | read_expr
 
 arguments ::= expr { "," expr }
 
-object_creation ::= ident "{" ident ":" expr { "," ident ":" expr } "}"
+object_creation ::= ident "{" object_field { "," object_field } "}"
+
+object_field ::= ident ":" expr
 
 read_expr ::= ( "👂" | "read" ) type
 
 cmp_op ::= "≡" | "eq" | "≢" | "neq"
 
-ident      ::= ( letter | "_" ) { letter | digit | "_" }
-letter     ::= "a" | ... | "z" | "A" | ... | "Z"
-digit      ::= "0" | ... | "9"
-number     ::= digit { digit }
+string ::= "\"" { string_char | escape } "\""
+
+string_char ::= ? any character except quotation mark, backslash, and line break ?
+
+escape ::= "\\" ? any character except line break ?
+
+ident ::= ( letter | "_" ) { letter | digit | "_" }
+
+letter ::= "a" | ... | "z" | "A" | ... | "Z"
+
+digit ::= "0" | ... | "9"
+
+number ::= digit { digit }
+
+whitespace ::= " " | "\t" | "\r" | "\n"
+
+(* Whitespace may appear between tokens. The lexer does not support comments. *)
+(* A block must contain at least one block_item; empty blocks are rejected. *)
+(* `hatch` is both a variable specifier and a function keyword. The parser
+   recognizes `hatch ident (` as a function declaration by lookahead. *)
+(* Assignment and swap require assignable targets; a postfix statement is
+   valid only when it ends in a function or member-function call. *)
+
+(* Text keyword synonyms:
+   duck32/duck64/pond_bool, leaf/hatch/stone/rock, nest_full/nest_empty,
+   peck/swan/waddle, feather/wing, finish/fly, swap, quack, eq/neq,
+   flock/lay/read. *)
