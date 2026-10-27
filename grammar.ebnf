@@ -1,18 +1,40 @@
-program ::= { statement } finish
+program ::= { top_item } finish
 
-finish ::= ( "finish" | "fly" | "🏁" ) operand ";"
+top_item ::= func_decl | struct_decl | statement
 
-statement ::= var_decl | assign_or_swap | if | while | print
+func_decl ::= "hatch" ident "(" [ params ] ")" "->" type block
+
+params ::= param { "," param }
+
+param ::= ident ":" type
+
+struct_decl ::= "flock" ident "🪶" { member } "🪽"
+
+member ::= field_decl | member_func_decl
+
+field_decl ::= ( "🍃" | "🪨" ) ident ":" type ";"
+
+member_func_decl ::= ( "🍃" | "🪨" ) "hatch" ident "(" [ params ] ")" "->" type block
+
+statement ::= var_decl | simple_stmt | if | while | print | return_stmt
 
 var_decl ::= specifier ident ":" type "<-" expr ";"
 
 specifier ::= "🍃" | "leaf" | "hatch" | "🪨" | "stone" | "rock"
 
-assign_or_swap ::= ident ( "<-" expr | swap_op ident { swap_op ident } ) ";"
+simple_stmt ::= assignable [ "<-" expr | swap_tail ] ";" | postfix ";"
+
+swap_tail ::= swap_op assignable { swap_op assignable }
+
+assignable ::= ident { "." ident }
 
 swap_op ::= "🔀" | "swap"
 
-print ::= ( "🔊" | "quack" ) expr ";"
+print ::= "🔊" ( string | expr ) ";"
+
+string ::= "\"" { ? any character except quotation mark and line break ? } "\""
+
+return_stmt ::= "lay" expr ";"
 
 if ::= ( "🐤" | "peck" ) expr block [ ( "🦢" | "swan" ) block ]
 
@@ -22,19 +44,31 @@ block ::= ( "🪶" | "feather" ) block_item { block_item } ( "🪽" | "wing" )
 
 block_item ::= statement | finish
 
-type ::= "🐥" | "duck32" | "🦆" | "duck64" | "🥚" | "pond_bool"
+finish ::= ( "finish" | "fly" | "🏁" ) operand ";"
+
+type ::= "🐥" | "duck32" | "🦆" | "duck64" | "🥚" | "pond_bool" | ident
 
 bool_literal ::= "🪺" | "nest_full" | "🪹" | "nest_empty"
 
 operand ::= ident | number | bool_literal | "(" expr ")"
 
-cmp_op ::= "≡" | "eq" | "≢" | "neq"
-
 expr ::= arith [ cmp_op arith ]
 
 arith ::= term { ("+" | "-") term }
 
-term ::= operand { ( "*" | "/" ) operand }
+term ::= postfix { ( "*" | "/" ) postfix }
+
+postfix ::= primary { "." ident | "(" [ arguments ] ")" }
+
+primary ::= ident | number | bool_literal | "(" expr ")" | object_creation | read_expr
+
+arguments ::= expr { "," expr }
+
+object_creation ::= ident "{" ident ":" expr { "," ident ":" expr } "}"
+
+read_expr ::= "👂" type
+
+cmp_op ::= "≡" | "eq" | "≢" | "neq"
 
 ident      ::= ( letter | "_" ) { letter | digit | "_" }
 letter     ::= "a" | ... | "z" | "A" | ... | "Z"

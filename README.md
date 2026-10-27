@@ -1,8 +1,269 @@
-# 🦆 Duck Lang Compiler (Stage 1: Lexer & Parser)
+# 🦆 Duck Lang Compiler (Stage 2)
 
 **Duck Lang** is an emoji-based programming language compiled using Python. Its syntax replaces traditional keywords and types with duck-themed emojis and symbols.
 
 - **Grammar Specification:** [`grammar.ebnf`](grammar.ebnf)
+
+## 📐 Stage 2 Semantic Rules
+
+These rules are checked at compile time unless a rule describes runtime output:
+
+1. Every function or method call MUST provide exactly the declared number of arguments. Each argument's type MUST match the type of the corresponding parameter.
+2. The expression in every `lay expr;` statement MUST have the declared return type of its function or method.
+3. Inside a member function, a name is looked up among the parameters and locals, then the fields, then the globals. The first matching name is used; a name with no matching declaration is an error.
+4. A mutating member function (`🍃 hatch`) that assigns a field can only be called on a mutable object (`🍃 obj`). A constant member function (`🪨 hatch`) cannot assign fields or call mutating methods.
+5. Assignment through a field chain such as `a.b.c <- value;` requires the base object and every field along the access chain to be mutable (`🍃`).
+6. Every `🔀` target MUST be an assignable variable or field. A function or method call result is a temporary, not an lvalue, and cannot be a swap target.
+7. Printing an object outputs its struct type name, followed by every field in declaration order, and a trailing newline.
+
+### 1. Call Argument Count and Types
+
+**Valid:**
+```duck
+hatch add (a : 🐥, b : 🐥) -> 🐥 🪶
+    lay a + b ;
+🪽
+flock Box 🪶
+    🍃 value : 🐥;
+    🪨 hatch sum(a : 🐥, b : 🐥) -> 🐥 🪶
+        lay a + b ;
+    🪽
+🪽
+🍃 box : Box <- Box { value: 0 };
+🍃 total : 🐥 <- add(2, 3) ;
+🍃 method_total : 🐥 <- box.sum(2, 3) ;
+finish 0 ;
+```
+
+**Invalid — wrong argument count and wrong argument type (each call is an error):**
+```duck
+hatch add (a : 🐥, b : 🐥) -> 🐥 🪶
+    lay a + b ;
+🪽
+flock Box 🪶
+    🍃 value : 🐥;
+    🪨 hatch sum(a : 🐥, b : 🐥) -> 🐥 🪶
+        lay a + b ;
+    🪽
+🪽
+🍃 box : Box <- Box { value: 0 };
+🍃 one : 🐥 <- add(2) ;
+🍃 two : 🐥 <- box.sum(2, 🪺) ;
+finish 0 ;
+```
+Expected: compilation errors because `add` requires two `🐥` arguments and `sum` requires two `🐥` arguments.
+
+### 2. Return Expression Type
+
+**Valid:**
+```duck
+hatch size (value : 🐥) -> 🐥 🪶
+    lay value + 1 ;
+🪽
+finish 0 ;
+```
+
+**Invalid:**
+```duck
+hatch size () -> 🐥 🪶
+    lay 🪺 ;
+🪽
+finish 0 ;
+```
+Expected: compilation error because the returned value is `🥚`, not `🐥`.
+
+### 3. Member-Function Name Lookup
+
+**Valid — the parameter shadows the field, and the field shadows the global:**
+```duck
+🍃 score : 🐥 <- 100 ;
+flock Bird 🪶
+    🍃 score : 🐥;
+    🪨 hatch parameter_wins (score : 🐥) -> 🐥 🪶
+        lay score ;
+    🪽
+    🪨 hatch field_wins () -> 🐥 🪶
+        lay score ;
+    🪽
+🪽
+finish 0 ;
+```
+
+**Invalid — `shade` is a `🥚` field, so it is selected before the `🐥` global:**
+```duck
+🍃 shade : 🐥 <- 1 ;
+flock Bird 🪶
+    🪨 shade : 🥚;
+    🪨 hatch read_shade () -> 🐥 🪶
+        lay shade ;
+    🪽
+🪽
+finish 0 ;
+```
+Expected: compilation error because `lay shade;` resolves to the field of type `🥚`, which does not match the return type `🐥`.
+
+### 4. Member-Function Mutability
+
+**Valid — call a mutating method on a mutable object; a constant method reads its field:**
+```duck
+flock Counter 🪶
+    🍃 value : 🐥;
+    🍃 hatch increment () -> 🐥 🪶
+        value <- value + 1 ;
+        lay value ;
+    🪽
+    🪨 hatch current () -> 🐥 🪶
+        lay value ;
+    🪽
+🪽
+🍃 counter : Counter <- Counter { value: 0 };
+🍃 result : 🐥 <- counter.increment() ;
+finish 0 ;
+```
+
+**Invalid — a constant receiver cannot call `increment`, and a constant method cannot assign a field:**
+```duck
+flock Counter 🪶
+    🍃 value : 🐥;
+    🍃 hatch increment () -> 🐥 🪶
+        value <- value + 1 ;
+        lay value ;
+    🪽
+    🪨 hatch reset () -> 🐥 🪶
+        value <- 0 ;
+        increment() ;
+        lay value ;
+    🪽
+🪽
+🪨 counter : Counter <- Counter { value: 0 };
+🍃 result : 🐥 <- counter.increment() ;
+finish 0 ;
+```
+Expected: compilation errors for calling a mutating method on an immutable object and assigning a field in a constant method.
+
+### 5. Mutability Through a Field Chain
+
+**Valid — the base object and each field in the chain are mutable:**
+```duck
+flock Inner 🪶
+    🍃 value : 🐥;
+🪽
+flock Outer 🪶
+    🍃 inner : Inner;
+🪽
+🍃 outer : Outer <- Outer { inner: Inner { value: 0 } };
+outer.inner.value <- 1 ;
+finish 0 ;
+```
+
+**Invalid — the immutable `inner` field breaks the chain:**
+```duck
+flock Inner 🪶
+    🍃 value : 🐥;
+🪽
+flock Outer 🪶
+    🪨 inner : Inner;
+🪽
+🍃 outer : Outer <- Outer { inner: Inner { value: 0 } };
+outer.inner.value <- 1 ;
+🪨 fixed : Outer <- Outer { inner: Inner { value: 0 } };
+fixed.inner.value <- 2 ;
+finish 0 ;
+```
+Expected: compilation errors because `outer.inner` is not mutable and `fixed` is an immutable base object.
+
+### 6. Swap Targets
+
+**Valid — both targets are assignable locations:**
+```duck
+🍃 left : 🐥 <- 1 ;
+🍃 right : 🐥 <- 2 ;
+left 🔀 right ;
+finish 0 ;
+```
+
+**Invalid — `next()` produces a temporary value:**
+```duck
+hatch next () -> 🐥 🪶
+    lay 1 ;
+🪽
+🍃 value : 🐥 <- 2 ;
+next() 🔀 value ;
+finish 0 ;
+```
+Expected: compilation error because a function-call result is not an assignable swap target.
+
+### 7. Object Printing
+
+**Valid — output starts with the type name, then fields `x` and `y` in declaration order, followed by a newline:**
+```duck
+flock Point 🪶
+    🍃 x : 🐥;
+    🍃 y : 🐥;
+🪽
+🍃 point : Point <- Point { x: 3, y: 4 };
+🔊 point ;
+finish 0 ;
+```
+
+**Invalid — an undeclared name is not a printable object:**
+```duck
+🔊 missing ;
+finish 0 ;
+```
+Expected: compilation error because `missing` is undeclared; object formatting is not reached.
+
+## 🧩 Stage 2 Syntax Overview
+
+Functions are declared with `hatch`; `lay` returns a value whose type matches the function's declared return type:
+```duck
+hatch double (value : 🐥) -> 🐥 🪶
+    lay value * 2 ;
+🪽
+```
+
+Structures use `flock`, `🪶`, and `🪽`. Fields use `🍃` when mutable and `🪨` when constant:
+```duck
+flock Point 🪶
+    🍃 x : 🐥;
+    🪨 label : 🐥;
+🪽
+```
+
+Member functions use `🍃 hatch` when mutating and `🪨 hatch` when read-only:
+```duck
+flock Counter 🪶
+    🍃 value : 🐥;
+    🍃 hatch increment () -> 🐥 🪶
+        value <- value + 1 ;
+        lay value ;
+    🪽
+    🪨 hatch current () -> 🐥 🪶
+        lay value ;
+    🪽
+🪽
+```
+
+Objects are instantiated with named field values. Dot notation accesses fields and calls methods:
+```duck
+🍃 point : Point <- Point { x: 3, label: 0 };
+point.x <- 4 ;
+flock Counter 🪶
+    🍃 value : 🐥;
+    🪨 hatch current () -> 🐥 🪶
+        lay value ;
+    🪽
+🪽
+🍃 counter : Counter <- Counter { value: 1 };
+🍃 next_value : 🐥 <- counter.current() ;
+```
+
+`👂 type` reads an integer of the requested type from standard input. `🔊` prints a string, expression, or object:
+```duck
+🍃 count : 🐥 <- 👂 🐥 ;
+🔊 count ;
+🔊 "A string literal" ;
+```
 
 ---
 
@@ -131,16 +392,6 @@ In Duck Lang (Stage 1), integer literal bounds are checked at the parser level d
    ```
 
 ---
-
-## 🚫 Semantics Deferred to Stage 2
-
-The following semantic checks are intentionally **not performed in Stage 1** and will be implemented in Stage 2:
-- Integer literal overflow in `finish` statements, assignments, and complex expressions (e.g. `finish 99999999999999999999 ;`).
-- Assigning to immutable (`🪨`) variables.
-- Variable re-declaration in the same scope.
-- Use of undeclared variables.
-- Type checking (e.g. assigning boolean expression to `🐥` variable, or using `🐥` in `if` condition).
-- Runtime or static arithmetic result overflow (e.g. `2000000000 + 2000000000`).
 
 ---
 
