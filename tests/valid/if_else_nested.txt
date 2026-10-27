@@ -1,0 +1,11 @@
+🍃 a : 🐥 <- 1 ;
+🐤 a ≡ 1 🪶
+    🐤 a ≡ 1 🪶
+        finish 0 ;
+    🪽 🦢 🪶
+        finish 1 ;
+    🪽
+🪽 🦢 🪶
+    finish 2 ;
+🪽
+finish 3 ;

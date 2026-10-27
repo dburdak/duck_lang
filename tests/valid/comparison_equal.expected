@@ -1,0 +1,9 @@
+Program
+  Decl x 🐥 mut
+    Const 5
+  Decl r 🥚 mut
+    BinOp ≡
+      Var x
+      Const 5
+  Exit
+    Const 0

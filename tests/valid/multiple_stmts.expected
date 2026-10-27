@@ -1,0 +1,11 @@
+Program
+  Decl a 🐥 mut
+    Const 1
+  Decl b 🐥 mut
+    Const 2
+  Decl c 🐥 mut
+    BinOp +
+      Var a
+      Var b
+  Exit
+    Var c

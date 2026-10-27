@@ -1,0 +1,5 @@
+Program
+  Decl x 🦆 mut
+    Const 9223372036854775807
+  Exit
+    Var x

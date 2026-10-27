@@ -1,0 +1,5 @@
+Program
+  Decl big 🦆 const
+    Const 1000000
+  Exit
+    Const 0

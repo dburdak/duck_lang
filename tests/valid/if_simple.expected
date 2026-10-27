@@ -1,0 +1,12 @@
+Program
+  Decl x 🐥 mut
+    Const 10
+  If
+    BinOp ≡
+      Var x
+      Const 10
+    Block
+      Assign x
+        Const 20
+  Exit
+    Var x

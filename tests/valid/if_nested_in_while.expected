@@ -1,0 +1,11 @@
+Program
+  While
+    Bool true
+    Block
+      If
+        Bool false
+        Block
+          Exit
+            Const 1
+  Exit
+    Const 0

@@ -1,0 +1,23 @@
+Program
+  Decl a 🐥 mut
+    Const 1
+  If
+    BinOp ≡
+      Var a
+      Const 1
+    Block
+      If
+        BinOp ≡
+          Var a
+          Const 1
+        Block
+          Exit
+            Const 0
+        Block
+          Exit
+            Const 1
+    Block
+      Exit
+        Const 2
+  Exit
+    Const 3
