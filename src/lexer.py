@@ -1,4 +1,3 @@
-import sys
 from typing import List
 
 try:
@@ -7,7 +6,6 @@ except ImportError:
     from src.errors import compilation_error
 
 
-# ── Emoji & Symbol UTF-8 Table ─────────────────────────────────────────
 class EmojiEntry:
     def __init__(self, seq: bytes, kind: str, text: str, codepoint: str, desc: str):
         self.seq = seq
@@ -16,12 +14,7 @@ class EmojiEntry:
         self.codepoint = codepoint
         self.desc = desc
 
-    @property
-    def utf8_hex(self) -> str:
-        return " ".join(f"0x{b:02X}" for b in self.seq)
 
-
-# Single source of truth for non-ASCII symbols in Duck Lang
 EMOJI_UTF8_TABLE: List[EmojiEntry] = [
     EmojiEntry(b"\xF0\x9F\x90\xA5", "typename", "🐥", "U+1F425", "Integer (32-bit)"),
     EmojiEntry(b"\xF0\x9F\xA6\x86", "typename", "🦆", "U+1F986", "Integer (64-bit)"),
@@ -36,16 +29,15 @@ EMOJI_UTF8_TABLE: List[EmojiEntry] = [
     EmojiEntry(b"\xF0\x9F\xAA\xBD", "rbrace", "🪽", "U+1FABD", "Block close"),
     EmojiEntry(b"\xE2\x89\xA1", "comparison", "≡", "U+2261", "Equal comparison"),
     EmojiEntry(b"\xE2\x89\xA2", "comparison", "≢", "U+2262", "Not equal comparison"),
-    EmojiEntry(b"\xF0\x9F\x94\x81", "keyword", "🔁", "U+1F501", "While loop (repeat)"),
+    EmojiEntry(b"\xF0\x9F\x94\x81", "keyword", "🔁", "U+1F501", "While loop"),
     EmojiEntry(b"\xF0\x9F\x94\x80", "swap", "🔀", "U+1F500", "Swap operator"),
-    EmojiEntry(b"\xF0\x9F\x94\x8A", "print", "🔊", "U+1F50A", "Print statement (speaker)"),
-    EmojiEntry(b"\xF0\x9F\x8F\x81", "statement", "finish", "U+1F3C1", "Finish statement (chequered flag)"),
+    EmojiEntry(b"\xF0\x9F\x94\x8A", "print", "🔊", "U+1F50A", "Print statement"),
+    EmojiEntry(b"\xF0\x9F\x91\x82", "read", "👂", "U+1F442", "Read expression"),
+    EmojiEntry(b"\xF0\x9F\x8F\x81", "statement", "finish", "U+1F3C1", "Finish statement"),
 ]
 
-# Sort table entries by sequence length descending
-EMOJI_UTF8_TABLE.sort(key=lambda e: len(e.seq), reverse=True)
+EMOJI_UTF8_TABLE.sort(key=lambda entry: len(entry.seq), reverse=True)
 
-# Reserved text keywords and their (kind, canonical_text)
 KEYWORD_MAP = {
     b"waddle": ("keyword", "🔁"),
     b"finish": ("statement", "finish"),
@@ -53,7 +45,7 @@ KEYWORD_MAP = {
     b"duck32": ("typename", "🐥"),
     b"duck64": ("typename", "🦆"),
     b"pond_bool": ("typename", "🥚"),
-    b"hatch": ("specifier", "🍃"),
+    b"hatch": ("hatch", "hatch"),
     b"leaf": ("specifier", "🍃"),
     b"stone": ("specifier", "🪨"),
     b"rock": ("specifier", "🪨"),
@@ -67,104 +59,173 @@ KEYWORD_MAP = {
     b"quack": ("print", "🔊"),
     b"eq": ("comparison", "≡"),
     b"neq": ("comparison", "≢"),
+    b"flock": ("flock", "flock"),
+    b"lay": ("lay", "lay"),
+    b"read": ("read", "read"),
 }
 
 
 class Token:
-    def __init__(self, kind: str, text: str, line: int, col: int):
+    def __init__(self, kind: str, text: str, line: int, col: int, value=None):
         self.kind = kind
         self.text = text
         self.line = line
         self.col = col
+        self.value = value
 
 
-def is_alpha(b: int) -> bool:
-    return (ord("A") <= b <= ord("Z")) or (ord("a") <= b <= ord("z")) or b == ord("_")
+def is_alpha(byte: int) -> bool:
+    return ord("A") <= byte <= ord("Z") or ord("a") <= byte <= ord("z") or byte == ord("_")
 
 
-def is_digit(b: int) -> bool:
-    return ord("0") <= b <= ord("9")
+def is_digit(byte: int) -> bool:
+    return ord("0") <= byte <= ord("9")
 
 
-def is_operator(b: int) -> bool:
-    return b in (ord("*"), ord("/"), ord("+"), ord("-"))
+def is_operator(byte: int) -> bool:
+    return byte in (ord("*"), ord("/"), ord("+"), ord("-"))
+
+
+def utf8_text(data: bytes) -> str:
+    characters = []
+    index = 0
+    while index < len(data):
+        first = data[index]
+        if first < 0x80:
+            codepoint = first
+            width = 1
+        elif first <= 0xDF:
+            codepoint = first & 0x1F
+            width = 2
+        elif first <= 0xEF:
+            codepoint = first & 0x0F
+            width = 3
+        else:
+            codepoint = first & 0x07
+            width = 4
+        for continuation in data[index + 1 : index + width]:
+            codepoint = (codepoint << 6) | (continuation & 0x3F)
+        characters.append(chr(codepoint))
+        index += width
+    return "".join(characters)
 
 
 def lex(data: bytes) -> List[Token]:
     tokens: List[Token] = []
     line, col = 1, 1
     i = 0
-    n = len(data)
+    size = len(data)
 
-    while i < n:
-        b = data[i]
-
-        # Whitespace
-        if b in (32, 9, 13):  # space, tab, \r
+    while i < size:
+        byte = data[i]
+        if byte in (32, 9, 13):
             i += 1
             col += 1
-        elif b == 10:  # \n
+        elif byte == 10:
             line += 1
             col = 1
             i += 1
-        # Identifiers and text keywords
-        elif is_alpha(b):
-            start = i
-            start_col = col
-            while i < n and (is_alpha(data[i]) or is_digit(data[i])):
+        elif is_alpha(byte):
+            start, start_col = i, col
+            while i < size and (is_alpha(data[i]) or is_digit(data[i])):
                 i += 1
                 col += 1
-            word_bytes = data[start:i]
-            if word_bytes in KEYWORD_MAP:
-                kind, text = KEYWORD_MAP[word_bytes]
+            word = data[start:i]
+            if word in KEYWORD_MAP:
+                kind, text = KEYWORD_MAP[word]
                 tokens.append(Token(kind, text, line, start_col))
             else:
-                text = word_bytes.decode("ascii")
+                text = word.decode("ascii")
                 tokens.append(Token("ident", text, line, start_col))
-        # Number Literals
-        elif is_digit(b):
-            start = i
-            start_col = col
-            while i < n and is_digit(data[i]):
+        elif is_digit(byte):
+            start, start_col = i, col
+            while i < size and is_digit(data[i]):
                 i += 1
                 col += 1
-            if i < n and is_alpha(data[i]):
-                bad_b = data[i]
-                char_disp = chr(bad_b) if 32 <= bad_b <= 126 else f"0x{bad_b:02X}"
-                compilation_error(line, col, f"unexpected byte '{char_disp}'")
-            num_bytes = data[start:i]
-            num_str = num_bytes.decode("ascii")
-            tokens.append(Token("constant", num_str, line, start_col))
-        # Single-byte ASCII punctuation and operators
-        elif b == ord("("):
+            if i < size and is_alpha(data[i]):
+                bad = data[i]
+                shown = chr(bad) if 32 <= bad <= 126 else f"0x{bad:02X}"
+                compilation_error(line, col, f"unexpected byte '{shown}'")
+            text = data[start:i].decode("ascii")
+            tokens.append(Token("constant", text, line, start_col))
+        elif byte == ord('"'):
+            start, start_col = i, col
+            i += 1
+            col += 1
+            value = bytearray()
+            while i < size and data[i] != ord('"'):
+                if data[i] in (10, 13):
+                    compilation_error(line, start_col, "unterminated string literal")
+                if data[i] == ord("\\") and i + 1 < size:
+                    value.extend(data[i : i + 2])
+                    i += 2
+                    col += 2
+                elif data[i] >= 128:
+                    first = data[i]
+                    width = 2 if first <= 0xDF else 3 if first <= 0xEF else 4
+                    if i + width > size or any(not 0x80 <= part <= 0xBF for part in data[i + 1 : i + width]):
+                        compilation_error(line, col, "invalid UTF-8 byte in string literal")
+                    value.extend(data[i : i + width])
+                    i += width
+                    col += 1
+                else:
+                    value.append(data[i])
+                    i += 1
+                    col += 1
+            if i >= size:
+                compilation_error(line, start_col, "unterminated string literal")
+            i += 1
+            col += 1
+            shown = utf8_text(data[start:i])
+            tokens.append(Token("string", shown, line, start_col, bytes(value)))
+        elif byte == ord("("):
             tokens.append(Token("lparen", "(", line, col))
             i += 1
             col += 1
-        elif b == ord(")"):
+        elif byte == ord(")"):
             tokens.append(Token("rparen", ")", line, col))
             i += 1
             col += 1
-        elif b == ord(":"):
+        elif byte == ord(":"):
             tokens.append(Token("colon", ":", line, col))
             i += 1
             col += 1
-        elif b == ord(";"):
+        elif byte == ord(";"):
             tokens.append(Token("semicolon", ";", line, col))
             i += 1
             col += 1
-        elif b == ord("<"):
-            if i + 1 < n and data[i + 1] == ord("-"):
+        elif byte == ord(","):
+            tokens.append(Token("comma", ",", line, col))
+            i += 1
+            col += 1
+        elif byte == ord("."):
+            tokens.append(Token("dot", ".", line, col))
+            i += 1
+            col += 1
+        elif byte == ord("{"):
+            tokens.append(Token("object_lbrace", "{", line, col))
+            i += 1
+            col += 1
+        elif byte == ord("}"):
+            tokens.append(Token("object_rbrace", "}", line, col))
+            i += 1
+            col += 1
+        elif byte == ord("<"):
+            if i + 1 < size and data[i + 1] == ord("-"):
                 tokens.append(Token("assignment", "<-", line, col))
                 i += 2
                 col += 2
             else:
                 compilation_error(line, col, "unexpected byte '<'")
-        elif is_operator(b):
-            tokens.append(Token("operator", chr(b), line, col))
+        elif byte == ord("-") and i + 1 < size and data[i + 1] == ord(">"):
+            tokens.append(Token("arrow", "->", line, col))
+            i += 2
+            col += 2
+        elif is_operator(byte):
+            tokens.append(Token("operator", chr(byte), line, col))
             i += 1
             col += 1
-        # Multibyte UTF-8 matching via EMOJI_UTF8_TABLE
-        elif b >= 128:
+        elif byte >= 128:
             start_col = col
             matched = False
             for entry in EMOJI_UTF8_TABLE:
@@ -174,35 +235,20 @@ def lex(data: bytes) -> List[Token]:
                     col += 1
                     matched = True
                     break
-
             if not matched:
-                # UTF-8 byte sequence error handling
-                if 0x80 <= b <= 0xBF:
-                    compilation_error(line, col, f"invalid UTF-8 byte 0x{b:02X}")
-                elif b == 0xFF or b < 0xC0 or b > 0xF7:
-                    compilation_error(line, col, f"invalid UTF-8 byte 0x{b:02X}")
-
-                if 0xC0 <= b <= 0xDF:
-                    expected_len = 2
-                elif 0xE0 <= b <= 0xEF:
-                    expected_len = 3
-                elif 0xF0 <= b <= 0xF7:
-                    expected_len = 4
-                else:
-                    expected_len = 1
-
-                if i + expected_len > n:
+                if 0x80 <= byte <= 0xBF or byte == 0xFF or byte < 0xC0 or byte > 0xF7:
+                    compilation_error(line, col, f"invalid UTF-8 byte 0x{byte:02X}")
+                width = 2 if byte <= 0xDF else 3 if byte <= 0xEF else 4
+                if i + width > size:
                     compilation_error(line, col, "truncated UTF-8 sequence at end of file")
-
-                seq_bytes = data[i : i + expected_len]
-                for cb in seq_bytes[1:]:
-                    if cb < 0x80 or cb > 0xBF:
-                        compilation_error(line, col, f"invalid UTF-8 byte 0x{cb:02X}")
-
-                hex_str = " ".join(f"0x{cb:02X}" for cb in seq_bytes)
-                compilation_error(line, col, f"unexpected byte sequence {hex_str}")
+                sequence = data[i : i + width]
+                for continuation in sequence[1:]:
+                    if continuation < 0x80 or continuation > 0xBF:
+                        compilation_error(line, col, f"invalid UTF-8 byte 0x{continuation:02X}")
+                hex_text = " ".join(f"0x{part:02X}" for part in sequence)
+                compilation_error(line, col, f"unexpected byte sequence {hex_text}")
         else:
-            char_disp = chr(b) if 32 <= b <= 126 else f"0x{b:02X}"
-            compilation_error(line, col, f"unexpected byte '{char_disp}'")
+            shown = chr(byte) if 32 <= byte <= 126 else f"0x{byte:02X}"
+            compilation_error(line, col, f"unexpected byte '{shown}'")
 
     return tokens
