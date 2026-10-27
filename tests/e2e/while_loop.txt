@@ -1,0 +1,6 @@
+🍃 value : 🐥 <- 0 ;
+🔁 value ≢ 5 🪶
+    value <- value + 1 ;
+🪽
+🔊 value ;
+finish 0 ;

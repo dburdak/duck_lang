@@ -1,0 +1,6 @@
+hatch next () -> 🐥 🪶
+    lay 1 ;
+🪽
+🍃 value : 🐥 <- 2 ;
+next() 🔀 value ;
+finish 0 ;

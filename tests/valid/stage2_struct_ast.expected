@@ -1,0 +1,19 @@
+Program
+  Struct Counter
+    Field value 🐥 mut index=0
+    MemberFunction current -> 🐥 const
+      Block
+        Return
+          Var value
+  Decl counter Counter mut
+    ObjectCreate Counter
+      Initializer value
+        Const 1
+  Decl result 🐥 mut
+    MemberCall arguments=0 chain_ends_in_member_call=True
+      FieldAccess current
+        Var counter
+  Print
+    String "ready"
+  Exit
+    Var result

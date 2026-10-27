@@ -1,0 +1,8 @@
+flock Counter 🪶
+    🍃 value : 🐥;
+    🪨 hatch reset () -> 🐥 🪶
+        value <- 0 ;
+        lay value ;
+    🪽
+🪽
+finish 0 ;

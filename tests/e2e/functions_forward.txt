@@ -1,0 +1,9 @@
+hatch caller () -> 🐥 🪶
+    lay later(5) ;
+🪽
+hatch later (value : 🐥) -> 🐥 🪶
+    lay value + 1 ;
+🪽
+🍃 result : 🐥 <- caller() ;
+🔊 result ;
+finish 0 ;
