@@ -1,0 +1,12 @@
+flock Box 🪶
+    🍃 value : 🐥;
+    🪨 hatch update_local () -> 🐥 🪶
+        🍃 local : Box <- Box { value: 2 };
+        local.value <- local.value + 1 ;
+        lay local.value ;
+    🪽
+🪽
+🍃 box : Box <- Box { value: 0 };
+🍃 result : 🐥 <- box.update_local() ;
+🔊 result ;
+finish 0 ;

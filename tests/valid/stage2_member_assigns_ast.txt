@@ -1,0 +1,8 @@
+flock Counter 🪶
+    🍃 value : 🐥;
+    🍃 hatch increment () -> 🐥 🪶
+        value <- value + 1 ;
+        lay value ;
+    🪽
+🪽
+finish 0 ;

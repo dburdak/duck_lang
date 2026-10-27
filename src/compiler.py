@@ -26,6 +26,8 @@ def compile_file(source_path, mode):
     p = Parser(tokens)
     ast_root = p.parse_program()
     if mode == "--ast":
+        if any(getattr(item, "methods", None) for item in ast_root.items):
+            SemanticAnalyzer(ast_root).analyze()
         ast_root.dump()
         return None
 

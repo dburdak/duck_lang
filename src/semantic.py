@@ -103,6 +103,9 @@ class SemanticAnalyzer:
         self.current_struct = None
         self.return_type = None
         self.in_global_scope = False
+        self.item_positions = {}
+        self.global_positions = {}
+        self.current_item_position = None
 
     def error(self, node, message):
         compilation_error(node.line, node.col, message)
@@ -110,12 +113,13 @@ class SemanticAnalyzer:
     def analyze(self):
         self.collect_declarations()
         self.analyze_globals()
-        for item in self.program.items:
+        for index, item in enumerate(self.program.items):
+            self.item_positions[id(item)] = index
             if isinstance(item, FunctionNode):
-                self.analyze_function(item)
+                self.analyze_function(item, item_position=index)
             elif isinstance(item, StructNode):
                 for method in item.methods:
-                    self.analyze_function(method, item.name)
+                    self.analyze_function(method, item.name, index)
         return self.program
 
     def collect_declarations(self):
@@ -193,9 +197,10 @@ class SemanticAnalyzer:
         self.current_struct = None
         self.in_global_scope = True
         items = self.program.items
-        for item in items:
+        for index, item in enumerate(items):
             if isinstance(item, DeclNode):
                 self.analyze_decl(item, self.globals)
+                self.global_positions[item.name] = index
             elif isinstance(item, (StmtNode, CallNode)):
                 if isinstance(item, ExitNode):
                     self.check_exit(item)
@@ -203,10 +208,11 @@ class SemanticAnalyzer:
                     self.analyze_statement(item)
         self.in_global_scope = False
 
-    def analyze_function(self, function, struct_name=None):
+    def analyze_function(self, function, struct_name=None, item_position=None):
         self.current_function = function
         self.current_struct = self.structs[struct_name] if struct_name else None
         self.return_type = function.result_type
+        self.current_item_position = item_position
         self.scopes = [{}]
         for param in function.params:
             symbol = VariableSymbol(param.name, param.type_name, False, param, "parameter")
@@ -218,6 +224,7 @@ class SemanticAnalyzer:
         self.current_function = None
         self.current_struct = None
         self.return_type = None
+        self.current_item_position = None
 
     def block_returns(self, block):
         for stmt in block.stmts:
@@ -281,7 +288,11 @@ class SemanticAnalyzer:
         elif isinstance(stmt, ReturnNode):
             if self.current_function is None:
                 self.error(stmt, "lay is only allowed inside a function")
-            result_type = self.check_expr(stmt.value, self.return_type)
+            message = (
+                f"function '{self.function_label(self.current_function)}' returns "
+                f"{self.return_type}, but 'lay' value has type {{type_name}}"
+            )
+            result_type = self.check_expr(stmt.value, self.return_type, message)
             if result_type != self.return_type:
                 self.error(stmt.value, f"returned value has type '{result_type}', expected '{self.return_type}'")
         elif isinstance(stmt, ExitNode):
@@ -306,15 +317,22 @@ class SemanticAnalyzer:
                 return scope[name]
         if self.current_struct and name in self.current_struct.fields:
             return self.current_struct.fields[name]
-        return self.globals.get(name)
+        symbol = self.globals.get(name)
+        if (
+            symbol is not None
+            and self.current_function is not None
+            and self.global_positions.get(name, -1) >= self.current_item_position
+        ):
+            return None
+        return symbol
 
-    def check_expr(self, expr, expected=None):
+    def check_expr(self, expr, expected=None, mismatch_message=None):
         if isinstance(expr, ConstNode):
             if expected in INTEGER_TYPES:
                 type_name = expected
-            elif len(expr.val.lstrip("0") or "0") <= len(str(I32_MAX)) and (expr.val.lstrip("0") or "0") <= str(I32_MAX):
+            elif self.literal_fits(expr.val, I32_MAX):
                 type_name = I32
-            elif len(expr.val.lstrip("0") or "0") <= len(str(I64_MAX)) and (expr.val.lstrip("0") or "0") <= str(I64_MAX):
+            elif self.literal_fits(expr.val, I64_MAX):
                 type_name = I64
             else:
                 self.error(expr, f"integer literal {expr.val} is out of range for 🦆 (i64 max {I64_MAX})")
@@ -374,26 +392,38 @@ class SemanticAnalyzer:
             self.error(expr, "unsupported expression")
         expr.inferred_type = type_name
         if expected is not None and type_name != expected:
-            self.error(expr, f"expected value of type '{expected}', got '{type_name}'")
+            message = mismatch_message.format(type_name=type_name) if mismatch_message else f"expected value of type '{expected}', got '{type_name}'"
+            self.error(expr, message)
         return type_name
+
+    def literal_fits(self, text, maximum):
+        digits = text.lstrip("0") or "0"
+        limit = str(maximum)
+        return len(digits) < len(limit) or (len(digits) == len(limit) and digits <= limit)
 
     def check_binary(self, expr, expected):
         if expr.op in ("+", "-", "*", "/"):
-            if isinstance(expr.left, ConstNode) and not isinstance(expr.right, ConstNode):
-                right_type = self.check_expr(expr.right, expected)
-                left_type = self.check_expr(expr.left, right_type)
-            else:
+            if isinstance(expr.left, ConstNode) and isinstance(expr.right, ConstNode):
                 left_type = self.check_expr(expr.left, expected)
                 right_type = self.check_expr(expr.right, left_type)
+            elif isinstance(expr.left, ConstNode):
+                right_type = self.check_expr(expr.right)
+                left_type = self.check_expr(expr.left, right_type)
+            else:
+                left_type = self.check_expr(expr.left)
+                right_type = self.check_expr(expr.right, left_type if isinstance(expr.right, ConstNode) else None)
             if left_type not in INTEGER_TYPES or right_type != left_type:
                 self.error(expr, "arithmetic operands must have the same integer type")
             return left_type
-        if isinstance(expr.left, ConstNode) and not isinstance(expr.right, ConstNode):
+        if isinstance(expr.left, ConstNode) and isinstance(expr.right, ConstNode):
+            right_type = self.check_expr(expr.right, expected)
+            left_type = self.check_expr(expr.left, right_type)
+        elif isinstance(expr.left, ConstNode):
             right_type = self.check_expr(expr.right)
             left_type = self.check_expr(expr.left, right_type)
         else:
             left_type = self.check_expr(expr.left)
-            right_type = self.check_expr(expr.right, left_type)
+            right_type = self.check_expr(expr.right, left_type if isinstance(expr.right, ConstNode) else None)
         if left_type != right_type:
             self.error(expr, "comparison operands must have the same type")
         if expr.op in ("≡", "≢") and left_type in BUILTIN_TYPES:
@@ -434,13 +464,23 @@ class SemanticAnalyzer:
             self.error(call.callee, "call target must be a function or member function")
 
         signature = call.function
+        function_name = self.function_label(signature)
         if len(call.args) != len(signature.param_types):
-            self.error(call, f"function '{signature.name}' expects {len(signature.param_types)} arguments, got {len(call.args)}")
+            self.error(call, f"function '{function_name}' expects {len(signature.param_types)} arguments, got {len(call.args)}")
         for index, (arg, param_type) in enumerate(zip(call.args, signature.param_types), 1):
-            arg_type = self.check_expr(arg, param_type)
+            message = f"argument {index} of '{function_name}' expects {param_type}, got {{type_name}}"
+            arg_type = self.check_expr(arg, param_type, message)
             if arg_type != param_type:
-                self.error(arg, f"argument {index} to '{signature.name}' has type '{arg_type}', expected '{param_type}'")
+                self.error(arg, message.format(type_name=arg_type))
         return signature.result_type
+
+    def function_label(self, function):
+        owner = getattr(function, "owner", None)
+        if owner is not None:
+            return f"{owner.name}.{function.name}"
+        if getattr(function, "struct_name", None) is not None:
+            return f"{function.struct_name}.{function.name}"
+        return function.name
 
     def analyze_lvalue(self, target):
         if isinstance(target, VarNode):
@@ -470,7 +510,7 @@ class SemanticAnalyzer:
         if isinstance(target, VarNode):
             return target.symbol.kind == "field"
         if isinstance(target, FieldAccessNode):
-            return True
+            return self.target_reaches_field(target.base)
         return False
 
     def check_exit(self, exit_node):

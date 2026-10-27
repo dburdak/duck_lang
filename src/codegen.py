@@ -299,6 +299,7 @@ class CodeGenerator:
             return value
         if isinstance(expr, ReadNode):
             slot = self.alloca(expr.type_name, "read.value")
+            self.builder.store(ir.Constant(self.type_of(expr.type_name), 0), slot)
             format_text = b"%d" if expr.type_name == "🐥" else b"%lld"
             self.builder.call(self.scanf, [self.add_string(format_text), slot])
             return self.builder.load(slot, name="read.result")

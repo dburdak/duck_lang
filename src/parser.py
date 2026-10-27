@@ -1,4 +1,5 @@
 from typing import List
+from contextlib import contextmanager
 
 try:
     from errors import compilation_error
@@ -76,9 +77,23 @@ def literal_exceeds(text: str, max_val: int) -> bool:
 
 
 class Parser:
+    MAX_NESTING = 100
+
     def __init__(self, tokens: List[Token]):
         self.tokens = tokens
         self.pos = 0
+        self.nesting_depth = 0
+
+    @contextmanager
+    def nested(self, token):
+        self.nesting_depth += 1
+        if self.nesting_depth > self.MAX_NESTING:
+            self.nesting_depth -= 1
+            compilation_error(token.line, token.col, "nesting is too deep")
+        try:
+            yield
+        finally:
+            self.nesting_depth -= 1
 
     def peek(self, offset=0):
         index = self.pos + offset
@@ -319,21 +334,22 @@ class Parser:
 
     def parse_block(self):
         opening = self.expect("lbrace", "'🪶'")
-        stmts = []
-        while True:
-            token = self.peek()
-            if token is None:
-                compilation_error(opening.line, opening.col, "'🪶' opened here is never closed")
-            if token.kind == "rbrace":
-                break
-            if token.kind == "statement":
-                stmts.append(self.parse_exit())
-            else:
-                stmts.append(self.parse_statement())
-        self.expect("rbrace", "'🪽'")
-        if not stmts:
-            compilation_error(opening.line, opening.col, "block must not be empty")
-        return BlockNode(opening.line, opening.col, stmts)
+        with self.nested(opening):
+            stmts = []
+            while True:
+                token = self.peek()
+                if token is None:
+                    compilation_error(opening.line, opening.col, "'🪶' opened here is never closed")
+                if token.kind == "rbrace":
+                    break
+                if token.kind == "statement":
+                    stmts.append(self.parse_exit())
+                else:
+                    stmts.append(self.parse_statement())
+            self.expect("rbrace", "'🪽'")
+            if not stmts:
+                compilation_error(opening.line, opening.col, "block must not be empty")
+            return BlockNode(opening.line, opening.col, stmts)
 
     def parse_expr(self):
         node = self.parse_arith()
@@ -376,15 +392,16 @@ class Parser:
         return node
 
     def parse_call_args(self):
-        self.expect("lparen", "'('")
-        args = []
-        if self.peek() is not None and self.peek().kind != "rparen":
-            args.append(self.parse_expr())
-            while self.peek() is not None and self.peek().kind == "comma":
-                self.eat()
+        opening = self.expect("lparen", "'('")
+        with self.nested(opening):
+            args = []
+            if self.peek() is not None and self.peek().kind != "rparen":
                 args.append(self.parse_expr())
-        self.expect("rparen", "')'")
-        return args
+                while self.peek() is not None and self.peek().kind == "comma":
+                    self.eat()
+                    args.append(self.parse_expr())
+            self.expect("rparen", "')'")
+            return args
 
     def parse_primary(self):
         token = self.peek()
@@ -410,20 +427,22 @@ class Parser:
             type_name = self.parse_type()
             return ReadNode(token.line, token.col, type_name)
         if token.kind == "lparen":
-            self.eat()
-            expr = self.parse_expr()
-            self.expect("rparen", "')'")
-            return expr
+            with self.nested(token):
+                self.eat()
+                expr = self.parse_expr()
+                self.expect("rparen", "')'")
+                return expr
         compilation_error(token.line, token.col, f"expected constant or variable, got '{token.text}'")
 
     def parse_object_creation(self, name):
-        self.expect("object_lbrace", "'{'")
-        fields = [self.parse_object_field()]
-        while self.peek() is not None and self.peek().kind == "comma":
-            self.eat()
-            fields.append(self.parse_object_field())
-        self.expect("object_rbrace", "'}'")
-        return ObjectCreateNode(name.line, name.col, name.text, fields)
+        opening = self.expect("object_lbrace", "'{'")
+        with self.nested(opening):
+            fields = [self.parse_object_field()]
+            while self.peek() is not None and self.peek().kind == "comma":
+                self.eat()
+                fields.append(self.parse_object_field())
+            self.expect("object_rbrace", "'}'")
+            return ObjectCreateNode(name.line, name.col, name.text, fields)
 
     def parse_object_field(self):
         name = self.expect("ident", "field name")

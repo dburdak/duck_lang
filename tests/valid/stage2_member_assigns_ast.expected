@@ -1,0 +1,13 @@
+Program
+  Struct Counter
+    Field value 🐥 mut index=0
+    MemberFunction increment -> 🐥 mut assigns_field=True
+      Block
+        Assign value
+          BinOp +
+            Var value
+            Const 1
+        Return
+          Var value
+  Exit
+    Const 0

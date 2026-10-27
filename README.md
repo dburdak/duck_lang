@@ -11,7 +11,9 @@ These rules are checked at compile time unless a rule describes runtime output:
 1. Every function or method call MUST provide exactly the declared number of arguments. Each argument's type MUST match the type of the corresponding parameter.
 2. The expression in every `lay expr;` statement MUST have the declared return type of its function or method.
 3. Inside a member function, a name is looked up among the parameters and locals, then the fields, then the globals. The first matching name is used; a name with no matching declaration is an error.
-4. A mutating member function (`🍃 hatch`) that assigns a field can only be called on a mutable object (`🍃 obj`). A constant member function (`🪨 hatch`) cannot assign fields or call mutating methods.
+   A global variable is visible in a function or method body only if its declaration appears earlier in the source than that function (or the structure containing the method).
+4. A mutating member function (`🍃 hatch`) can only be called on a mutable object (`🍃 obj`), whether or not its body assigns a field. A constant member function (`🪨 hatch`) cannot assign fields of `self` or call mutating methods of `self`.
+   A mutating method that never assigns a field is valid and has `assigns_field=False` in its AST output.
 5. Assignment through a field chain such as `a.b.c <- value;` requires the base object and every field along the access chain to be mutable (`🍃`).
 6. Every `🔀` target MUST be an assignable variable or field. A function or method call result is a temporary, not an lvalue, and cannot be a swap target.
 7. Printing an object outputs `TypeName { field: value, ... }`, with fields in declaration order and a trailing newline. Nested objects use the same format.

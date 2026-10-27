@@ -51,6 +51,8 @@ class FunctionNode(ASTNode):
         prefix = "MemberFunction" if self.struct_name else "Function"
         flag = "mut" if self.mutable else "const" if self.mutable is not None else ""
         suffix = f" {flag}" if flag else ""
+        if self.struct_name:
+            suffix += f" assigns_field={self.assigns_field}"
         print(" " * indent + f"{prefix} {self.name} -> {self.result_type}{suffix}")
         for param in self.params:
             param.dump(indent + 2)

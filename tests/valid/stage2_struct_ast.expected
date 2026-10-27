@@ -1,7 +1,7 @@
 Program
   Struct Counter
     Field value 🐥 mut index=0
-    MemberFunction current -> 🐥 const
+    MemberFunction current -> 🐥 const assigns_field=False
       Block
         Return
           Var value
