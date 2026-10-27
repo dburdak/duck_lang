@@ -36,15 +36,37 @@ EMOJI_UTF8_TABLE: List[EmojiEntry] = [
     EmojiEntry(b"\xF0\x9F\xAA\xBD", "rbrace", "🪽", "U+1FABD", "Block close"),
     EmojiEntry(b"\xE2\x89\xA1", "comparison", "≡", "U+2261", "Equal comparison"),
     EmojiEntry(b"\xE2\x89\xA2", "comparison", "≢", "U+2262", "Not equal comparison"),
+    EmojiEntry(b"\xF0\x9F\x94\x81", "keyword", "🔁", "U+1F501", "While loop (repeat)"),
+    EmojiEntry(b"\xF0\x9F\x94\x80", "swap", "🔀", "U+1F500", "Swap operator"),
+    EmojiEntry(b"\xF0\x9F\x94\x8A", "print", "🔊", "U+1F50A", "Print statement (speaker)"),
+    EmojiEntry(b"\xF0\x9F\x8F\x81", "statement", "finish", "U+1F3C1", "Finish statement (chequered flag)"),
 ]
 
 # Sort table entries by sequence length descending
 EMOJI_UTF8_TABLE.sort(key=lambda e: len(e.seq), reverse=True)
 
-# Reserved text keywords
-KEYWORD_BYTES = {
-    b"waddle": "keyword",
-    b"finish": "statement",
+# Reserved text keywords and their (kind, canonical_text)
+KEYWORD_MAP = {
+    b"waddle": ("keyword", "🔁"),
+    b"finish": ("statement", "finish"),
+    b"fly": ("statement", "finish"),
+    b"duck32": ("typename", "🐥"),
+    b"duck64": ("typename", "🦆"),
+    b"pond_bool": ("typename", "🥚"),
+    b"hatch": ("specifier", "🍃"),
+    b"leaf": ("specifier", "🍃"),
+    b"stone": ("specifier", "🪨"),
+    b"rock": ("specifier", "🪨"),
+    b"nest_full": ("bool_literal", "🪺"),
+    b"nest_empty": ("bool_literal", "🪹"),
+    b"peck": ("keyword", "🐤"),
+    b"swan": ("keyword", "🦢"),
+    b"feather": ("lbrace", "🪶"),
+    b"wing": ("rbrace", "🪽"),
+    b"swap": ("swap", "🔀"),
+    b"quack": ("print", "🔊"),
+    b"eq": ("comparison", "≡"),
+    b"neq": ("comparison", "≢"),
 }
 
 
@@ -93,9 +115,12 @@ def lex(data: bytes) -> List[Token]:
                 i += 1
                 col += 1
             word_bytes = data[start:i]
-            kind = KEYWORD_BYTES.get(word_bytes, "ident")
-            text = word_bytes.decode("ascii")
-            tokens.append(Token(kind, text, line, start_col))
+            if word_bytes in KEYWORD_MAP:
+                kind, text = KEYWORD_MAP[word_bytes]
+                tokens.append(Token(kind, text, line, start_col))
+            else:
+                text = word_bytes.decode("ascii")
+                tokens.append(Token("ident", text, line, start_col))
         # Number Literals
         elif is_digit(b):
             start = i

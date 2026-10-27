@@ -18,6 +18,8 @@ try:
         IfNode,
         WhileNode,
         ExitNode,
+        SwapStmtNode,
+        PrintStmtNode,
     )
 except ImportError:
     from src.errors import compilation_error
@@ -37,6 +39,8 @@ except ImportError:
         IfNode,
         WhileNode,
         ExitNode,
+        SwapStmtNode,
+        PrintStmtNode,
     )
 
 # ── Type Limits Table ─────────────────────────────────────────────────
@@ -104,7 +108,7 @@ class Parser:
 
     def parse_program(self) -> ProgramNode:
         stmts = []
-        while self.peek() is not None and self.peek().text != "finish":
+        while self.peek() is not None and self.peek().kind != "statement":
             stmts.append(self.parse_statement())
 
         tok = self.peek()
@@ -132,17 +136,19 @@ class Parser:
         if tok.kind == "specifier":
             return self.parse_decl()
         elif tok.kind == "ident":
-            return self.parse_assignment()
+            return self.parse_assign_or_swap()
         elif tok.kind == "keyword" and tok.text == "🐤":
             return self.parse_if()
-        elif tok.kind == "keyword" and tok.text == "waddle":
+        elif tok.kind == "keyword" and tok.text in ("waddle", "🔁"):
             return self.parse_while()
+        elif tok.kind == "print":
+            return self.parse_print()
         else:
             compilation_error(tok.line, tok.col, f"cannot start a statement with '{tok.text}'")
 
     def parse_decl(self) -> DeclNode:
         spec_tok = self.eat()  # '🍃' | '🪨'
-        mutable = (spec_tok.text == "🍃")
+        mutable = (spec_tok.text in ("🍃", "hatch", "leaf"))
 
         name_tok = self.expect("ident", "variable name")
         self.expect("colon", "':'")
@@ -167,12 +173,30 @@ class Parser:
 
         return DeclNode(spec_tok.line, spec_tok.col, type_name, name_tok.text, mutable, init)
 
-    def parse_assignment(self) -> AssignNode:
+    def parse_assign_or_swap(self) -> StmtNode:
         var_tok = self.eat()  # ident
-        self.expect("assignment", "'<-'")
-        value = self.parse_expr()
+        next_tok = self.peek()
+        if next_tok is not None and next_tok.kind == "swap":
+            self.eat()  # '🔀' or 'swap'
+            second_var = self.expect("ident", "variable name")
+            targets = [var_tok.text, second_var.text]
+            while (tok := self.peek()) is not None and tok.kind == "swap":
+                self.eat()
+                next_var = self.expect("ident", "variable name")
+                targets.append(next_var.text)
+            self.expect("semicolon", "';'")
+            return SwapStmtNode(var_tok.line, var_tok.col, targets)
+        else:
+            self.expect("assignment", "'<-'")
+            value = self.parse_expr()
+            self.expect("semicolon", "';'")
+            return AssignNode(var_tok.line, var_tok.col, var_tok.text, value)
+
+    def parse_print(self) -> PrintStmtNode:
+        print_tok = self.eat()  # '🔊' or 'quack'
+        expr = self.parse_expr()
         self.expect("semicolon", "';'")
-        return AssignNode(var_tok.line, var_tok.col, var_tok.text, value)
+        return PrintStmtNode(print_tok.line, print_tok.col, expr)
 
     def parse_exit(self) -> ExitNode:
         exit_tok = self.expect("statement", "'finish'")
@@ -218,7 +242,7 @@ class Parser:
             return ConstNode(tok.line, tok.col, tok.text)
         elif tok.kind == "bool_literal":
             self.eat()
-            is_true = (tok.text == "🪺")
+            is_true = (tok.text in ("🪺", "nest_full", "true"))
             return BoolNode(tok.line, tok.col, is_true)
         elif tok.kind == "lparen":
             self.eat()
@@ -258,7 +282,7 @@ class Parser:
             if tok.kind == "rbrace":
                 break
 
-            if tok.text == "finish":
+            if tok.kind == "statement":
                 stmts.append(self.parse_exit())
             else:
                 stmts.append(self.parse_statement())
