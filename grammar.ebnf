@@ -1,26 +1,36 @@
 program ::= { statement } finish
 
-finish ::= "finish" operand ";"
+finish ::= ( "finish" | "fly" | "🏁" ) operand ";"
 
-statement ::= var_decl | assignment | if | while
+statement ::= var_decl | assign_or_swap | if | while | print
 
-var_decl ::= ( "🍃" | "🪨" ) ident ":" type "<-" expr ";"
+var_decl ::= specifier ident ":" type "<-" expr ";"
 
-assignment ::= ident "<-" expr ";"
+specifier ::= "🍃" | "leaf" | "hatch" | "🪨" | "stone" | "rock"
 
-if ::= "🐤" expr block [ "🦢" block ]
+assign_or_swap ::= ident ( "<-" expr | swap_op ident { swap_op ident } ) ";"
 
-while ::= "waddle" expr block
+swap_op ::= "🔀" | "swap"
 
-block ::= "🪶" block_item { block_item } "🪽"
+print ::= ( "🔊" | "quack" ) expr ";"
+
+if ::= ( "🐤" | "peck" ) expr block [ ( "🦢" | "swan" ) block ]
+
+while ::= ( "🔁" | "waddle" ) expr block
+
+block ::= ( "🪶" | "feather" ) block_item { block_item } ( "🪽" | "wing" )
 
 block_item ::= statement | finish
 
-type ::= "🐥" | "🦆" | "🥚"
+type ::= "🐥" | "duck32" | "🦆" | "duck64" | "🥚" | "pond_bool"
 
-operand ::= ident | number | "🪺" | "🪹" | "(" expr ")"
+bool_literal ::= "🪺" | "nest_full" | "🪹" | "nest_empty"
 
-expr ::= arith [ ( "≡" | "≢" ) arith ]
+operand ::= ident | number | bool_literal | "(" expr ")"
+
+cmp_op ::= "≡" | "eq" | "≢" | "neq"
+
+expr ::= arith [ cmp_op arith ]
 
 arith ::= term { ("+" | "-") term }
 
