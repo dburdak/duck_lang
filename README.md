@@ -438,14 +438,16 @@ python -m pip install -r requirements.txt
 ```
 
 ### Command Line Interface
-`--ast` prints the parsed tree. `--ir` performs semantic analysis and prints LLVM IR:
+`--ast` prints the parsed tree. To compile a program, pass the input and output paths; the IR file is created only after parsing, semantic analysis, and IR generation succeed:
 
 ```bash
-python3 src/compiler.py --ast path/to/program.txt
-python3 src/compiler.py --ir path/to/program.txt > program.ll
+python3 compiler.py --ast path/to/program.txt
+python3 compiler.py path/to/program.txt program.ll
 clang program.ll -o program
 ./program
 ```
+
+`--ir input.txt` remains available as a legacy form that writes IR to standard output.
 
 Functions are emitted with a `duck_fn_` prefix; member functions use `duck_method_<Struct>_<name>`. Structures are identified LLVM types, and fields use their declaration-order index for `getelementptr`. Runtime input and output use `scanf` and `printf`.
 
@@ -481,7 +483,7 @@ Program
 
 ## 🧪 Running Tests
 
-The test suite preserves the Stage 1 AST and lexer/parser error checks, exercises semantic errors with exact line-and-column diagnostics, and runs 15 end-to-end programs through LLVM IR generation, `clang`, and output comparison. `read_input.in` supplies the standard input for the corresponding end-to-end test.
+The test suite preserves the Stage 1 AST and lexer/parser error checks, exercises semantic errors with exact line-and-column diagnostics, and runs end-to-end programs through LLVM IR generation, `clang`, and output comparison. `read_input.in` supplies standard input for its corresponding end-to-end test.
 
 ### Run Test Suite
 ```bash
