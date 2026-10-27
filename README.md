@@ -1,4 +1,4 @@
-# 🦆 Duck Lang Compiler (Stage 2)
+# 🦆 Duck Lang Compiler (Stage 2: Front End, Semantics & LLVM)
 
 **Duck Lang** is an emoji-based programming language compiled using Python. Its syntax replaces traditional keywords and types with duck-themed emojis and symbols.
 
@@ -14,7 +14,7 @@ These rules are checked at compile time unless a rule describes runtime output:
 4. A mutating member function (`🍃 hatch`) that assigns a field can only be called on a mutable object (`🍃 obj`). A constant member function (`🪨 hatch`) cannot assign fields or call mutating methods.
 5. Assignment through a field chain such as `a.b.c <- value;` requires the base object and every field along the access chain to be mutable (`🍃`).
 6. Every `🔀` target MUST be an assignable variable or field. A function or method call result is a temporary, not an lvalue, and cannot be a swap target.
-7. Printing an object outputs its struct type name, followed by every field in declaration order, and a trailing newline.
+7. Printing an object outputs `TypeName { field: value, ... }`, with fields in declaration order and a trailing newline. Nested objects use the same format.
 
 ### 1. Call Argument Count and Types
 
@@ -121,7 +121,22 @@ flock Counter 🪶
 finish 0 ;
 ```
 
-**Invalid — a constant receiver cannot call `increment`, and a constant method cannot assign a field:**
+**Invalid — a constant receiver cannot call a mutating method:**
+```duck
+flock Counter 🪶
+    🍃 value : 🐥;
+    🍃 hatch increment () -> 🐥 🪶
+        value <- value + 1 ;
+        lay value ;
+    🪽
+🪽
+🪨 counter : Counter <- Counter { value: 0 };
+🍃 result : 🐥 <- counter.increment() ;
+finish 0 ;
+```
+Expected: compilation error because `counter` is immutable.
+
+**Invalid — a constant member function cannot assign a field or call a mutating method:**
 ```duck
 flock Counter 🪶
     🍃 value : 🐥;
@@ -130,16 +145,14 @@ flock Counter 🪶
         lay value ;
     🪽
     🪨 hatch reset () -> 🐥 🪶
-        value <- 0 ;
         increment() ;
+        value <- 0 ;
         lay value ;
     🪽
 🪽
-🪨 counter : Counter <- Counter { value: 0 };
-🍃 result : 🐥 <- counter.increment() ;
 finish 0 ;
 ```
-Expected: compilation errors for calling a mutating method on an immutable object and assigning a field in a constant method.
+Expected: compilation error because the constant method calls a mutating method; removing that call still leaves an invalid field assignment.
 
 ### 5. Mutability Through a Field Chain
 
@@ -195,7 +208,7 @@ Expected: compilation error because a function-call result is not an assignable 
 
 ### 7. Object Printing
 
-**Valid — output starts with the type name, then fields `x` and `y` in declaration order, followed by a newline:**
+**Valid — output is `Point { x: 3, y: 4 }` followed by a newline:**
 ```duck
 flock Point 🪶
     🍃 x : 🐥;
@@ -211,7 +224,7 @@ finish 0 ;
 🔊 missing ;
 finish 0 ;
 ```
-Expected: compilation error because `missing` is undeclared; object formatting is not reached.
+Expected: compilation error because `missing` is undeclared.
 
 ## 🧩 Stage 2 Syntax Overview
 
@@ -258,7 +271,7 @@ flock Counter 🪶
 🍃 next_value : 🐥 <- counter.current() ;
 ```
 
-`👂 type` reads an integer of the requested type from standard input. `🔊` prints a string, expression, or object:
+`👂 type` (or `read type`) reads an integer of the requested type from standard input. `🔊` (or `quack`) prints a string, expression, or object. Strings support `\n`, `\r`, `\t`, `\\`, and `\"` escapes:
 ```duck
 🍃 count : 🐥 <- 👂 🐥 ;
 🔊 count ;
@@ -287,6 +300,11 @@ flock Counter 🪶
 | **Else Keyword** | Keyword | 🦢 | `swan` | `U+1F9A2` | `0xF0 0x9F 0xA6 0xA2` |
 | **While Keyword** | Keyword | 🔁 | `waddle` | `U+1F501` | `0xF0 0x9F 0x94 0x81` |
 | **Finish Statement** | Statement | 🏁 | `finish` / `fly` | `U+1F3C1` | `0xF0 0x9F 0x8F 0x81` |
+| **Function declaration / return** | Keyword / Statement | `hatch` / `lay` | `hatch` / `lay` | ASCII | — |
+| **Structure declaration** | Keyword | `flock` | `flock` | ASCII | — |
+| **Mutable / constant member** | Field / method specifier | 🍃 / 🪨 | `leaf` / `stone` | `U+1F343` / `U+1FAA8` | See rows above |
+| **Read expression** | Built-in | 👂 | `read` | `U+1F442` | `0xF0 0x9F 0x91 0x82` |
+| **Function arrow** | Punctuation | `->` | `->` | ASCII | `0x2D 0x3E` |
 | **Block Open** | Lbrace | 🪶 | `feather` | `U+1FAB6` | `0xF0 0x9F 0xAA 0xB6` |
 | **Block Close** | Rbrace | 🪽 | `wing` | `U+1FABD` | `0xF0 0x9F 0xAA 0xBD` |
 
@@ -295,10 +313,11 @@ flock Counter 🪶
 ## 📌 Language Description & Features
 
 ### 1. Types
-Duck Lang supports three data types:
+Duck Lang supports three built-in types and user-declared structure types:
 - `🐥` / `duck32` — 32-bit Integer (`i32`, range: $-2^{31}$ to $2^{31}-1$, max $2147483647$)
 - `🦆` / `duck64` — 64-bit Integer (`i64`, range: $-2^{63}$ to $2^{63}-1$, max $9223372036854775807$)
 - `🥚` / `pond_bool` — Boolean (`bool`)
+- A declared structure name, such as `Point` — an object with its declared fields and methods.
 
 **Boolean Literals:**
 - `🪺` / `nest_full` — `true` (Full Nest)
@@ -365,7 +384,7 @@ finish x ;
 ```
 
 ### 6. Program Completion (`finish`)
-- Every program MUST end with a top-level `finish` statement followed by an exit operand and `;`.
+- Every program MUST end with a top-level `finish` statement followed by an integer expression and `;`.
 - No statements are allowed after the final top-level `finish`.
 - `finish` statements may also be placed inside blocks (`🪶` ... `🪽`).
 
@@ -393,25 +412,42 @@ In Duck Lang (Stage 1), integer literal bounds are checked at the parser level d
 
 ---
 
----
+## ⚠️ Stage 2 Integer and Arithmetic Checks
+
+During `--ir` semantic analysis, an integer literal used outside the Stage 1 bare-initializer check is assigned its contextual `🐥` or `🦆` type and MUST fit that type's positive range. Signed addition, subtraction, and multiplication use LLVM overflow intrinsics; division checks for zero and the signed minimum divided by `-1`. A runtime arithmetic overflow or invalid division calls the C `abort()` function.
 
 ## ⚙ Lexer & Parser Architecture
 
 - **Byte-level Lexing:** The lexer operates directly over source `bytes` without decoding the entire source file. Emojis (`🐥`, `🦆`, `🍃`, `🪶`, etc.) are matched directly against raw UTF-8 byte sequences stored in `EMOJI_UTF8_TABLE`.
+- **Hand-written State Machine:** The lexer recognizes Stage 1 and Stage 2 tokens, including strings, arrows, member access, object initializers, functions, structures, and reads.
 - **Column Calculation:** Columns are counted in characters (emojis count as 1 column width).
 - **Error Position for Missing `finish`:** If a top-level `finish` is missing at end-of-file, the error position is placed immediately after the last token (`line`, `col + len(text)`).
 - **Recursive Descent Parser:** One parser function per grammar rule.
+- **Semantic Pass:** Before IR generation, the compiler builds symbol tables for global variables, functions, structures, ordered fields, and member functions. It validates declaration scopes, types, return values, calls, field access, mutability, and integer ranges.
+- **LLVM Builder:** `llvmlite.ir` builds the module. Checked integer arithmetic branches to `abort()` on signed overflow or invalid division; `printf` and `scanf` are declared as C runtime functions.
 
 ---
 
 ## 🛠 Building & Running the Compiler
 
+### Install the dependency
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
 ### Command Line Interface
-The compiler requires the `--ast` flag:
+`--ast` prints the parsed tree. `--ir` performs semantic analysis and prints LLVM IR:
 
 ```bash
 python3 src/compiler.py --ast path/to/program.txt
+python3 src/compiler.py --ir path/to/program.txt > program.ll
+clang program.ll -o program
+./program
 ```
+
+Functions are emitted with a `duck_fn_` prefix; member functions use `duck_method_<Struct>_<name>`. Structures are identified LLVM types, and fields use their declaration-order index for `getelementptr`. Runtime input and output use `scanf` and `printf`.
 
 #### Example Usage:
 Given `sample.txt`:
@@ -445,7 +481,7 @@ Program
 
 ## 🧪 Running Tests
 
-The test suite validates both valid AST generation and exact single-line error output for syntax/lexical errors.
+The test suite preserves the Stage 1 AST and lexer/parser error checks, exercises semantic errors with exact line-and-column diagnostics, and runs 15 end-to-end programs through LLVM IR generation, `clang`, and output comparison. `read_input.in` supplies the standard input for the corresponding end-to-end test.
 
 ### Run Test Suite
 ```bash

@@ -22,17 +22,21 @@ var_decl ::= specifier ident ":" type "<-" expr ";"
 
 specifier ::= "🍃" | "leaf" | "hatch" | "🪨" | "stone" | "rock"
 
-simple_stmt ::= assignable [ "<-" expr | swap_tail ] ";" | postfix ";"
-
-swap_tail ::= swap_op assignable { swap_op assignable }
+simple_stmt ::= postfix [ "<-" expr | swap_tail ] ";"
 
 assignable ::= ident { "." ident }
+
+swap_tail ::= swap_op assignable { swap_op assignable }
 
 swap_op ::= "🔀" | "swap"
 
 print ::= "🔊" ( string | expr ) ";"
 
-string ::= "\"" { ? any character except quotation mark and line break ? } "\""
+string ::= "\"" { string_char } "\""
+
+string_char ::= ? any character except quotation mark, backslash, and line break ? | escape
+
+escape ::= "\\" ? any character except line break ?
 
 return_stmt ::= "lay" expr ";"
 
@@ -44,7 +48,7 @@ block ::= ( "🪶" | "feather" ) block_item { block_item } ( "🪽" | "wing" )
 
 block_item ::= statement | finish
 
-finish ::= ( "finish" | "fly" | "🏁" ) operand ";"
+finish ::= ( "finish" | "fly" | "🏁" ) expr ";"
 
 type ::= "🐥" | "duck32" | "🦆" | "duck64" | "🥚" | "pond_bool" | ident
 
@@ -60,13 +64,13 @@ term ::= postfix { ( "*" | "/" ) postfix }
 
 postfix ::= primary { "." ident | "(" [ arguments ] ")" }
 
-primary ::= ident | number | bool_literal | "(" expr ")" | object_creation | read_expr
+primary ::= ident | number | bool_literal | string | "(" expr ")" | object_creation | read_expr
 
 arguments ::= expr { "," expr }
 
 object_creation ::= ident "{" ident ":" expr { "," ident ":" expr } "}"
 
-read_expr ::= "👂" type
+read_expr ::= ( "👂" | "read" ) type
 
 cmp_op ::= "≡" | "eq" | "≢" | "neq"
 
