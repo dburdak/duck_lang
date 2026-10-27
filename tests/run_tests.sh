@@ -13,23 +13,23 @@ FAILED=0
 FAILED_LIST=()
 
 echo "═══ CODE CHECKS ═══"
-# Check forbidden methods/modules in src/compiler.py
-FORBIDDEN_MATCHES=$(grep -nE "import re|\.split\(|\.decode\(|\.encode\(" "$COMPILER" | grep -v '\.decode("ascii")')
+# Check forbidden methods/modules in all src/*.py files
+FORBIDDEN_MATCHES=$(grep -nE "import re|\.split\(|\.decode\(|\.encode\(" "$REPO_DIR"/src/*.py | grep -v '\.decode("ascii")')
 if [ -n "$FORBIDDEN_MATCHES" ]; then
-    echo "  FAIL: Forbidden calls found in src/compiler.py:"
+    echo "  FAIL: Forbidden calls found in src/*.py:"
     echo "$FORBIDDEN_MATCHES"
     FAILED=$((FAILED + 1))
     FAILED_LIST+=("forbidden_code_check")
 else
-    echo "  PASS: No forbidden calls in src/compiler.py"
+    echo "  PASS: No forbidden calls in src/*.py"
 fi
 
-# Check no --tokens in compiler.py or README.md
-TOKENS_COMPILER=$(grep -n "\--tokens" "$COMPILER")
+# Check no --tokens in src/*.py or README.md
+TOKENS_SRC=$(grep -n "\--tokens" "$REPO_DIR"/src/*.py)
 TOKENS_README=$(grep -n "\--tokens" "$REPO_DIR/README.md")
-if [ -n "$TOKENS_COMPILER" ] || [ -n "$TOKENS_README" ]; then
+if [ -n "$TOKENS_SRC" ] || [ -n "$TOKENS_README" ]; then
     echo "  FAIL: Found --tokens references:"
-    [ -n "$TOKENS_COMPILER" ] && echo "    compiler.py: $TOKENS_COMPILER"
+    [ -n "$TOKENS_SRC" ] && echo "    src/*.py: $TOKENS_SRC"
     [ -n "$TOKENS_README" ] && echo "    README.md: $TOKENS_README"
     FAILED=$((FAILED + 1))
     FAILED_LIST+=("tokens_flag_check")

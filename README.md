@@ -2,8 +2,30 @@
 
 **Duck Lang** is an emoji-based programming language compiled using Python. Its syntax replaces traditional keywords and types with duck-themed emojis and symbols.
 
-- **Grammar Specification:** [`grammar.ebnf`](file:///Users/darynaburdak/Documents/kse/compilors/duck_lang/grammar.ebnf)
-- **Emoji Keyword & UTF-8 Mapping:** [`table_key_words_emoji.txt`](file:///Users/darynaburdak/Documents/kse/compilors/duck_lang/table_key_words_emoji.txt)
+- **Grammar Specification:** [`grammar.ebnf`](grammar.ebnf)
+
+---
+
+## 📋 Emoji & Keyword Mapping (UTF-8)
+
+| Вимога з ТЗ | Конструкція Duck Lang | Emoji / Symbol | Code Point | UTF-8 Hex Bytes |
+| --- | --- | --- | --- | --- |
+| **Integer (32-bit)** | Typename | 🐥 | `U+1F425` | `0xF0 0x9F 0x90 0xA5` |
+| **Integer (64-bit)** | Typename | 🦆 | `U+1F986` | `0xF0 0x9F 0xA6 0x86` |
+| **Boolean type** | Typename | 🥚 | `U+1F95A` | `0xF0 0x9F 0xA5 0x9A` |
+| **Boolean true** | Bool literal | 🪺 | `U+1FABA` | `0xF0 0x9F 0xAA 0xBA` |
+| **Boolean false** | Bool literal | 🪹 | `U+1FAB9` | `0xF0 0x9F 0xAA 0xB9` |
+| **Mutable variable** | Specifier | 🍃 | `U+1F343` | `0xF0 0x9F 0x8D 0x83` |
+| **Constant (immutable)** | Specifier | 🪨 | `U+1FAA8` | `0xF0 0x9F 0xAA 0xA8` |
+| **Assignment** | Operator | `<-` | ASCII | `0x3C 0x2D` |
+| **Comparison (Equal)** | Comparison | `≡` | `U+2261` | `0xE2 0x89 0xA1` |
+| **Comparison (Not Eq)** | Comparison | `≢` | `U+2262` | `0xE2 0x89 0xA2` |
+| **If Keyword** | Keyword | 🐤 | `U+1F424` | `0xF0 0x9F 0x90 0xA4` |
+| **Else Keyword** | Keyword | 🦢 | `U+1F9A2` | `0xF0 0x9F 0xA6 0xA2` |
+| **While Keyword** | Keyword | `waddle` | ASCII | `0x77 0x61 0x64 0x64 0x6C 0x65` |
+| **Finish Statement** | Statement | `finish` | ASCII | `0x66 0x69 0x6E 0x69 0x73 0x68` |
+| **Block Open** | Lbrace | 🪶 | `U+1FAB6` | `0xF0 0x9F 0xAA 0xB6` |
+| **Block Close** | Rbrace | 🪽 | `U+1FABD` | `0xF0 0x9F 0xAA 0xBD` |
 
 ---
 
