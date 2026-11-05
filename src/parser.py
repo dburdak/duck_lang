@@ -22,6 +22,9 @@ try:
         FieldAccessNode,
         CallNode,
         ObjectCreateNode,
+        RaftLiteralNode,
+        RaftType,
+        IndexNode,
         ReadNode,
         BlockNode,
         IfNode,
@@ -52,6 +55,9 @@ except ImportError:
         FieldAccessNode,
         CallNode,
         ObjectCreateNode,
+        RaftLiteralNode,
+        RaftType,
+        IndexNode,
         ReadNode,
         BlockNode,
         IfNode,
@@ -117,6 +123,8 @@ class Parser:
             line, col = self.get_pos_info()
             compilation_error(line, col, f"expected {expected_desc}, found end of file")
         if token.kind != kind:
+            if token.kind in ("less", "greater"):
+                compilation_error(token.line, token.col, f"unexpected byte '{token.text}'")
             compilation_error(token.line, token.col, f"expected {expected_desc}, got '{token.text}'")
         return self.eat()
 
@@ -148,6 +156,16 @@ class Parser:
         if token is None:
             line, col = self.get_pos_info()
             compilation_error(line, col, "expected type name, found end of file")
+        if token.kind == "raft":
+            self.eat()
+            self.expect("less", "'<'")
+            element_type = self.expect("typename", "built-in raft element type")
+            size_expr = None
+            if self.peek() is not None and self.peek().kind == "comma":
+                self.eat()
+                size_expr = self.parse_expr()
+            self.expect("greater", "'>'")
+            return RaftType(element_type.text, size_expr)
         if token.kind not in ("typename", "ident"):
             compilation_error(token.line, token.col, f"expected type name, got '{token.text}'")
         return self.eat().text
@@ -236,6 +254,8 @@ class Parser:
             return self.parse_if()
         if token.kind == "keyword" and token.text in ("waddle", "🔁"):
             return self.parse_while()
+        if token.kind in ("less", "greater"):
+            compilation_error(token.line, token.col, f"unexpected byte '{token.text}'")
         if token.kind == "print":
             return self.parse_print()
         if token.kind == "lay":
@@ -283,6 +303,8 @@ class Parser:
         if next_token is None:
             line, col = self.get_pos_info()
             compilation_error(line, col, "expected '<-', found end of file")
+        if next_token.kind == "less":
+            compilation_error(next_token.line, next_token.col, "unexpected byte '<'")
         compilation_error(next_token.line, next_token.col, f"expected '<-', got '{next_token.text}'")
 
     def parse_swap_target(self):
@@ -387,6 +409,11 @@ class Parser:
                 args = self.parse_call_args()
                 member_call = isinstance(node, FieldAccessNode)
                 node = CallNode(node.line, node.col, node, args, member_call)
+            elif self.peek().kind == "lbracket":
+                opening = self.eat()
+                index = self.parse_expr()
+                self.expect("rbracket", "']'")
+                node = IndexNode(opening.line, opening.col, node, index)
             else:
                 break
         return node
@@ -408,6 +435,8 @@ class Parser:
         if token is None:
             line, col = self.get_pos_info()
             compilation_error(line, col, "expected constant or variable, found end of file")
+        if token.kind in ("less", "greater"):
+            compilation_error(token.line, token.col, f"unexpected byte '{token.text}'")
         if token.kind == "ident":
             self.eat()
             if self.peek() is not None and self.peek().kind == "object_lbrace":
@@ -422,6 +451,17 @@ class Parser:
         if token.kind == "string":
             self.eat()
             return StringNode(token.line, token.col, token.value, token.text[1:-1])
+        if token.kind == "lbracket":
+            opening = self.eat()
+            with self.nested(opening):
+                elements = []
+                if self.peek() is not None and self.peek().kind != "rbracket":
+                    elements.append(self.parse_expr())
+                    while self.peek() is not None and self.peek().kind == "comma":
+                        self.eat()
+                        elements.append(self.parse_expr())
+                self.expect("rbracket", "']'")
+                return RaftLiteralNode(opening.line, opening.col, elements)
         if token.kind == "read":
             self.eat()
             type_name = self.parse_type()

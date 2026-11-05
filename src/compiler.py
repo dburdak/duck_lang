@@ -14,7 +14,7 @@ except ImportError:
     from src.semantic import SemanticAnalyzer
 
 
-def compile_file(source_path, mode):
+def compile_file(source_path, mode, optimize=False):
     try:
         with open(source_path, "rb") as f:
             data = f.read()
@@ -25,6 +25,29 @@ def compile_file(source_path, mode):
     tokens = lex(data)
     p = Parser(tokens)
     ast_root = p.parse_program()
+    if optimize:
+        if __package__:
+            from src.optimizer import Optimizer
+        else:
+            from optimizer import Optimizer
+        analyzer = SemanticAnalyzer(ast_root)
+        analyzer.analyze()
+        ast_root = Optimizer(ast_root).optimize()
+        analyzer = SemanticAnalyzer(ast_root)
+        analyzer.analyze()
+        if mode == "--ast":
+            ast_root.dump()
+            return None
+        try:
+            if __package__:
+                from src.codegen import CodeGenerator
+            else:
+                from codegen import CodeGenerator
+        except ModuleNotFoundError as import_error:
+            if import_error.name == "llvmlite":
+                compilation_error(1, 1, "LLVM generation requires llvmlite; install dependencies from requirements.txt")
+            raise
+        return CodeGenerator(ast_root, analyzer).generate()
     if mode == "--ast":
         if any(getattr(item, "methods", None) for item in ast_root.items):
             SemanticAnalyzer(ast_root).analyze()
@@ -47,7 +70,10 @@ def compile_file(source_path, mode):
 
 def main(argv=None):
     args = sys.argv[1:] if argv is None else argv
-    usage = "Usage: python3 compiler.py [--ast <input.txt> | <input.txt> <output.ll>]\n"
+    optimize = bool(args and args[0] == "--optimize")
+    if optimize:
+        args = args[1:]
+    usage = "Usage: python3 compiler.py [--optimize] [--ast <input.txt> | --ir <input.txt> | <input.txt> <output.ll>]\n"
     if len(args) == 2 and args[0] in ("--ast", "--ir"):
         mode, source_path = args
         output_path = None
@@ -73,7 +99,7 @@ def main(argv=None):
 
     temporary_path = None
     try:
-        ir_text = compile_file(source_path, mode)
+        ir_text = compile_file(source_path, mode, optimize)
         if mode == "--ir":
             sys.stdout.write(ir_text)
         elif output_path is not None:

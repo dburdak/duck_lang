@@ -62,6 +62,7 @@ KEYWORD_MAP = {
     b"flock": ("flock", "flock"),
     b"lay": ("lay", "lay"),
     b"read": ("read", "read"),
+    b"raft": ("raft", "raft"),
 }
 
 
@@ -210,13 +211,27 @@ def lex(data: bytes) -> List[Token]:
             tokens.append(Token("object_rbrace", "}", line, col))
             i += 1
             col += 1
+        elif byte == ord("["):
+            tokens.append(Token("lbracket", "[", line, col))
+            i += 1
+            col += 1
+        elif byte == ord("]"):
+            tokens.append(Token("rbracket", "]", line, col))
+            i += 1
+            col += 1
         elif byte == ord("<"):
             if i + 1 < size and data[i + 1] == ord("-"):
                 tokens.append(Token("assignment", "<-", line, col))
                 i += 2
                 col += 2
             else:
-                compilation_error(line, col, "unexpected byte '<'")
+                tokens.append(Token("less", "<", line, col))
+                i += 1
+                col += 1
+        elif byte == ord(">"):
+            tokens.append(Token("greater", ">", line, col))
+            i += 1
+            col += 1
         elif byte == ord("-") and i + 1 < size and data[i + 1] == ord(">"):
             tokens.append(Token("arrow", "->", line, col))
             i += 2

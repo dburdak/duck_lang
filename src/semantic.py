@@ -8,6 +8,8 @@ try:
         FieldNode,
         ParamNode,
         DeclNode,
+        ExprStmtNode,
+        InlineExprNode,
         AssignNode,
         BinOpNode,
         VarNode,
@@ -17,6 +19,9 @@ try:
         FieldAccessNode,
         CallNode,
         ObjectCreateNode,
+        RaftLiteralNode,
+        RaftType,
+        IndexNode,
         ReadNode,
         BlockNode,
         IfNode,
@@ -36,6 +41,8 @@ except ImportError:
         FieldNode,
         ParamNode,
         DeclNode,
+        ExprStmtNode,
+        InlineExprNode,
         AssignNode,
         BinOpNode,
         VarNode,
@@ -45,6 +52,9 @@ except ImportError:
         FieldAccessNode,
         CallNode,
         ObjectCreateNode,
+        RaftLiteralNode,
+        RaftType,
+        IndexNode,
         ReadNode,
         BlockNode,
         IfNode,
@@ -63,6 +73,8 @@ INTEGER_TYPES = (I32, I64)
 BUILTIN_TYPES = (I32, I64, BOOL)
 I32_MAX = 2147483647
 I64_MAX = 9223372036854775807
+MAX_RAFT_BYTES = 1024 * 1024
+BUILTIN_TYPE_BYTES = {I32: 4, I64: 8, BOOL: 1}
 
 
 class VariableSymbol:
@@ -73,6 +85,7 @@ class VariableSymbol:
         self.node = node
         self.kind = kind
         self.address = None
+        self.constant_value = None
 
 
 class FunctionSymbol:
@@ -131,6 +144,8 @@ class SemanticAnalyzer:
         for name, structure in self.structs.items():
             for index, field in enumerate(structure.node.fields):
                 self.validate_type(field.type_name, field)
+                if isinstance(field.type_name, RaftType):
+                    self.error(field, "raft fields are not supported")
                 if field.name in structure.fields:
                     self.error(field, f"field '{field.name}' is already declared in structure '{name}'")
                 field.index = index
@@ -155,13 +170,21 @@ class SemanticAnalyzer:
                 self.functions[item.name] = symbol
 
     def validate_type(self, type_name, node):
+        if isinstance(type_name, RaftType):
+            if type_name.element_type not in BUILTIN_TYPES:
+                self.error(node, f"invalid raft type '{type_name}'")
+            return
         if type_name not in BUILTIN_TYPES and type_name not in self.structs:
             self.error(node, f"unknown type '{type_name}'")
 
     def validate_function_signature(self, function):
         for param in function.params:
             self.validate_type(param.type_name, param)
+            if isinstance(param.type_name, RaftType) and param.type_name.size_expr is not None:
+                self.error(param, "raft function parameters must omit the size")
         self.validate_type(function.result_type, function)
+        if isinstance(function.result_type, RaftType):
+            self.error(function, "functions cannot return raft values")
         seen = set()
         for param in function.params:
             if param.name in seen:
@@ -246,6 +269,8 @@ class SemanticAnalyzer:
     def analyze_statement(self, stmt):
         if isinstance(stmt, DeclNode):
             self.analyze_decl(stmt, self.scopes[-1] if self.scopes else self.globals)
+        elif isinstance(stmt, ExprStmtNode):
+            self.check_expr(stmt.expr)
         elif isinstance(stmt, AssignNode):
             target_type, mutable = self.analyze_lvalue(stmt.target)
             targets_field = self.current_function is not None and self.current_struct is not None and self.target_reaches_field(stmt.target)
@@ -256,6 +281,7 @@ class SemanticAnalyzer:
             value_type = self.check_expr(stmt.value, target_type)
             if value_type != target_type:
                 self.error(stmt.value, f"cannot assign value of type '{value_type}' to '{target_type}'")
+            self.check_raft_size_compatibility(target_type, value_type, stmt.value)
             if targets_field:
                 self.current_function.assigns_field = True
         elif isinstance(stmt, SwapStmtNode):
@@ -267,6 +293,8 @@ class SemanticAnalyzer:
                 target_types.append(type_name)
             if any(type_name != target_types[0] for type_name in target_types[1:]):
                 self.error(stmt, "swap targets must have the same type")
+            for type_name in target_types[1:]:
+                self.check_raft_size_compatibility(target_types[0], type_name, stmt)
         elif isinstance(stmt, CallNode):
             self.check_expr(stmt)
         elif isinstance(stmt, PrintStmtNode):
@@ -298,12 +326,33 @@ class SemanticAnalyzer:
 
     def analyze_decl(self, decl, scope):
         self.validate_type(decl.type_name, decl)
+        if isinstance(decl.type_name, RaftType):
+            if decl.type_name.size_expr is None:
+                self.error(decl, "raft variable declarations must specify a size")
+            size_type = self.check_expr(decl.type_name.size_expr)
+            if size_type not in INTEGER_TYPES:
+                self.error(decl.type_name.size_expr, "raft size must have an integer type")
+            known_size = self.known_integer_value(decl.type_name.size_expr)
+            element_bytes = BUILTIN_TYPE_BYTES[decl.type_name.element_type]
+            max_elements = MAX_RAFT_BYTES // element_bytes
+            if known_size is not None:
+                if known_size <= 0:
+                    self.error(decl.type_name.size_expr, "raft size must be greater than zero")
+                if known_size > max_elements:
+                    self.error(
+                        decl.type_name.size_expr,
+                        f"raft size exceeds the {MAX_RAFT_BYTES}-byte limit",
+                    )
+                decl.type_name.static_size = known_size
         if decl.name in scope:
             self.error(decl, f"variable '{decl.name}' is already declared in this scope")
         init_type = self.check_expr(decl.init, decl.type_name)
         if init_type != decl.type_name:
             self.error(decl.init, f"initializer has type '{init_type}', expected '{decl.type_name}'")
+        self.check_raft_size_compatibility(decl.type_name, init_type, decl.init)
         symbol = VariableSymbol(decl.name, decl.type_name, decl.mutable, decl, "global" if scope is self.globals else "local")
+        if not decl.mutable:
+            symbol.constant_value = self.known_integer_value(decl.init)
         decl.symbol = symbol
         scope[decl.name] = symbol
         if scope is self.globals:
@@ -325,7 +374,13 @@ class SemanticAnalyzer:
         return symbol
 
     def check_expr(self, expr, expected=None, mismatch_message=None):
-        if isinstance(expr, ConstNode):
+        if isinstance(expr, InlineExprNode):
+            self.scopes.append({})
+            for statement in expr.statements:
+                self.analyze_statement(statement)
+            type_name = self.check_expr(expr.value, expr.return_type)
+            self.scopes.pop()
+        elif isinstance(expr, ConstNode):
             if expected in INTEGER_TYPES:
                 type_name = expected
             elif self.literal_fits(expr.val, I32_MAX):
@@ -363,6 +418,41 @@ class SemanticAnalyzer:
                 self.error(expr, f"structure '{base_type}' has no field '{expr.name}'")
             expr.field = field
             type_name = field.type_name
+        elif isinstance(expr, RaftLiteralNode):
+            if not isinstance(expected, RaftType):
+                self.error(expr, "raft literal needs an expected raft type")
+            if not expr.elements and expected.size_expr is None:
+                self.error(expr, "an empty raft literal needs an expected size")
+            max_elements = MAX_RAFT_BYTES // BUILTIN_TYPE_BYTES[expected.element_type]
+            if len(expr.elements) > max_elements:
+                self.error(expr, f"raft literal exceeds the {MAX_RAFT_BYTES}-byte limit")
+            if expr.elements and expected.static_size is not None and len(expr.elements) != expected.static_size:
+                self.error(expr, f"raft literal has {len(expr.elements)} elements, expected {expected.static_size}")
+            for index, element in enumerate(expr.elements, 1):
+                element_type = self.check_expr(element, expected.element_type)
+                if element_type != expected.element_type:
+                    self.error(
+                        element,
+                        f"raft element {index} expects '{expected.element_type}', got '{element_type}'",
+                    )
+            type_name = expected
+        elif isinstance(expr, IndexNode):
+            base_type = self.check_expr(expr.base)
+            if not isinstance(base_type, RaftType):
+                self.error(expr, f"value of type '{base_type}' cannot be indexed")
+            index_type = self.check_expr(expr.index)
+            if index_type not in INTEGER_TYPES:
+                self.error(expr.index, "raft index must have an integer type")
+            known_index = self.known_integer_value(expr.index)
+            if known_index is not None:
+                if base_type.static_size is not None and (known_index < 0 or known_index >= base_type.static_size):
+                    self.error(
+                        expr.index,
+                        f"constant raft index {known_index} is out of bounds for size {base_type.static_size}",
+                    )
+                if base_type.static_size is not None:
+                    expr.known_index = known_index
+            type_name = base_type.element_type
         elif isinstance(expr, ObjectCreateNode):
             structure = self.structs.get(expr.type_name)
             if structure is None:
@@ -398,6 +488,43 @@ class SemanticAnalyzer:
         digits = text.lstrip("0") or "0"
         limit = str(maximum)
         return len(digits) < len(limit) or (len(digits) == len(limit) and digits <= limit)
+
+    def check_raft_size_compatibility(self, expected, actual, node):
+        if (
+            isinstance(expected, RaftType)
+            and isinstance(actual, RaftType)
+            and expected.static_size is not None
+            and actual.static_size is not None
+            and expected.static_size != actual.static_size
+        ):
+            self.error(node, "raft sizes do not match")
+
+    def known_integer_value(self, expr):
+        if isinstance(expr, ConstNode):
+            return int(expr.val)
+        if isinstance(expr, VarNode) and expr.symbol is not None:
+            return getattr(expr.symbol, "constant_value", None)
+        if not isinstance(expr, BinOpNode) or expr.op not in ("+", "-", "*", "/"):
+            return None
+        left = self.known_integer_value(expr.left)
+        right = self.known_integer_value(expr.right)
+        if left is None or right is None:
+            return None
+        if expr.op == "+":
+            value = left + right
+        elif expr.op == "-":
+            value = left - right
+        elif expr.op == "*":
+            value = left * right
+        else:
+            if right == 0:
+                return None
+            value = (abs(left) // abs(right)) * (-1 if (left < 0) != (right < 0) else 1)
+        if expr.inferred_type in INTEGER_TYPES:
+            bits = 32 if expr.inferred_type == I32 else 64
+            if value < -(1 << (bits - 1)) or value >= (1 << (bits - 1)):
+                return None
+        return value
 
     def check_binary(self, expr, expected):
         if expr.op in ("+", "-", "*", "/"):
@@ -491,6 +618,9 @@ class SemanticAnalyzer:
         if isinstance(target, FieldAccessNode):
             type_name = self.check_expr(target)
             return type_name, self.is_mutable_receiver(target)
+        if isinstance(target, IndexNode):
+            type_name = self.check_expr(target)
+            return type_name, self.is_mutable_receiver(target.base)
         self.error(target, "assignment and swap targets must be variables or fields")
 
     def is_mutable_receiver(self, target):
@@ -502,12 +632,17 @@ class SemanticAnalyzer:
         if isinstance(target, FieldAccessNode):
             self.check_expr(target)
             return target.field.mutable and self.is_mutable_receiver(target.base)
+        if isinstance(target, IndexNode):
+            self.check_expr(target)
+            return self.is_mutable_receiver(target.base)
         return False
 
     def target_reaches_field(self, target):
         if isinstance(target, VarNode):
             return target.symbol.kind == "field"
         if isinstance(target, FieldAccessNode):
+            return self.target_reaches_field(target.base)
+        if isinstance(target, IndexNode):
             return self.target_reaches_field(target.base)
         return False
 

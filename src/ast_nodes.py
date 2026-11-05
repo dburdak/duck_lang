@@ -26,6 +26,48 @@ class ExprNode(ASTNode):
         self.inferred_type = None
 
 
+class InlineExprNode(ExprNode):
+    def __init__(self, line, col, statements, value, return_type=None):
+        super().__init__(line, col)
+        self.statements = statements
+        self.value = value
+        self.return_type = return_type
+
+    def dump(self, indent=0):
+        print(" " * indent + "InlineExpr")
+        for statement in self.statements:
+            statement.dump(indent + 2)
+        print(" " * indent + "InlineValue")
+        self.value.dump(indent + 2)
+
+
+class RaftType:
+    def __init__(self, element_type: str, size_expr=None):
+        self.element_type = element_type
+        self.size_expr = size_expr
+        self.static_size = None
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, RaftType)
+            and self.element_type == other.element_type
+        )
+
+    def __hash__(self):
+        return hash(self.element_type)
+
+    def __str__(self):
+        if self.size_expr is None:
+            return f"raft<{self.element_type}>"
+        if isinstance(self.size_expr, ConstNode):
+            size = self.size_expr.val
+        elif isinstance(self.size_expr, VarNode):
+            size = self.size_expr.name
+        else:
+            size = "expression"
+        return f"raft<{self.element_type}, {size}>"
+
+
 class ParamNode(ASTNode):
     def __init__(self, line: int, col: int, name: str, type_name: str):
         super().__init__(line, col)
@@ -100,6 +142,16 @@ class DeclNode(StmtNode):
         kind = "mut" if self.mutable else "const"
         print(" " * indent + f"Decl {self.name} {self.type_name} {kind}")
         self.init.dump(indent + 2)
+
+
+class ExprStmtNode(StmtNode):
+    def __init__(self, line, col, expr):
+        super().__init__(line, col)
+        self.expr = expr
+
+    def dump(self, indent=0):
+        print(" " * indent + "ExprStmt")
+        self.expr.dump(indent + 2)
 
 
 class AssignNode(StmtNode):
@@ -192,6 +244,30 @@ class ObjectCreateNode(ExprNode):
         for name, value in self.fields:
             print(" " * (indent + 2) + f"Initializer {name}")
             value.dump(indent + 4)
+
+
+class RaftLiteralNode(ExprNode):
+    def __init__(self, line, col, elements):
+        super().__init__(line, col)
+        self.elements = elements
+
+    def dump(self, indent=0):
+        print(" " * indent + f"RaftLiteral elements={len(self.elements)}")
+        for element in self.elements:
+            element.dump(indent + 2)
+
+
+class IndexNode(ExprNode):
+    def __init__(self, line, col, base, index):
+        super().__init__(line, col)
+        self.base = base
+        self.index = index
+        self.known_index = None
+
+    def dump(self, indent=0):
+        print(" " * indent + "Index")
+        self.base.dump(indent + 2)
+        self.index.dump(indent + 2)
 
 
 class ReadNode(ExprNode):

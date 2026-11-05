@@ -58,7 +58,11 @@ finish ::= finish_keyword expr ";"
 
 finish_keyword ::= "🏁" | "finish" | "fly"
 
-type ::= "🐥" | "duck32" | "🦆" | "duck64" | "🥚" | "pond_bool" | ident
+type ::= builtin_type | raft_type | ident
+
+builtin_type ::= "🐥" | "duck32" | "🦆" | "duck64" | "🥚" | "pond_bool"
+
+raft_type ::= "raft" "<" builtin_type [ "," expr ] ">"
 
 bool_literal ::= "🪺" | "nest_full" | "🪹" | "nest_empty"
 
@@ -68,11 +72,15 @@ arith ::= term { ("+" | "-") term }
 
 term ::= postfix { ("*" | "/") postfix }
 
-postfix ::= primary { "." ident | call_suffix }
+postfix ::= primary { "." ident | call_suffix | index_suffix }
 
 call_suffix ::= "(" [ arguments ] ")"
 
-primary ::= ident | number | bool_literal | string | "(" expr ")" | object_creation | read_expr
+primary ::= ident | number | bool_literal | string | "(" expr ")" | object_creation | read_expr | raft_literal
+
+index_suffix ::= "[" expr "]"
+
+raft_literal ::= "[" [ arguments ] "]"
 
 arguments ::= expr { "," expr }
 
@@ -107,7 +115,10 @@ whitespace ::= " " | "\t" | "\r" | "\n"
 (* Assignment and swap require assignable targets; a postfix statement is
    valid only when it ends in a function or member-function call. *)
 
+(* A raft variable has a positive fixed length chosen at creation. Its size
+   expression is evaluated once; an unsized raft type is allowed for function
+   parameters. `[]` zero-initializes all elements. *)
 (* Text keyword synonyms:
    duck32/duck64/pond_bool, leaf/hatch/stone/rock, nest_full/nest_empty,
    peck/swan/waddle, feather/wing, finish/fly, swap, quack, eq/neq,
-   flock/lay/read. *)
+   flock/lay/read/raft. *)
