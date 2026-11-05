@@ -11,5 +11,7 @@ Program
   ExprStmt
     Call arguments=0 chain_ends_in_member_call=False
       Var announce
+  ExprStmt
+    Read 🐥
   Exit
     Const 0

@@ -1,4 +1,5 @@
-🍃 unused : duck32 <- 4;
+🍃 first : duck32 <- 4;
+🍃 unused : duck32 <- first;
 🍃 visible : duck32 <- 9;
 🔊 visible;
 finish 0;

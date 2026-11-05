@@ -4,4 +4,5 @@ hatch announce () -> duck32 🪶
 🪽
 🍃 unused : duck32 <- announce();
 unused <- announce();
+🍃 ignored_input : duck32 <- 👂 duck32;
 finish 0;

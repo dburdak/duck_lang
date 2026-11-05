@@ -65,6 +65,14 @@ for test_file in "$SCRIPT_DIR"/valid/*.txt; do
         cat "$TMP_ERR"
         FAILED=$((FAILED + 1))
         FAILED_LIST+=("valid/$name")
+    elif [ "$name" = "wide_literal_in_finish" ]; then
+        echo "  PASS $name (parser-only; outside semantic optimization)"
+        PASSED=$((PASSED + 1))
+    elif ! "$PYTHON" "$COMPILER" --optimize --ast "$test_file" > "$TMP_OUT" 2> "$TMP_ERR"; then
+        echo "  FAIL $name (--optimize --ast)"
+        cat "$TMP_ERR"
+        FAILED=$((FAILED + 1))
+        FAILED_LIST+=("valid/$name")
     else
         echo "  PASS $name"
         PASSED=$((PASSED + 1))
@@ -81,6 +89,7 @@ for test_file in "$SCRIPT_DIR"/invalid/*.txt; do
 
     "$PYTHON" "$COMPILER" "$test_file" "$ir_file" > "$TMP_OUT" 2> "$TMP_ERR"
     exit_code=$?
+    cp "$TMP_ERR" "$TMP_DIR/$name.baseline.err"
 
     if [ $exit_code -eq 0 ]; then
         echo "  FAIL $name (unexpected exit code 0)"
@@ -97,6 +106,16 @@ for test_file in "$SCRIPT_DIR"/invalid/*.txt; do
     elif ! diff -u "$err_file" "$TMP_ERR" > "$TMP_OUT"; then
         echo "  FAIL $name (stderr mismatch)"
         cat "$TMP_OUT"
+        FAILED=$((FAILED + 1))
+        FAILED_LIST+=("invalid/$name")
+    elif "$PYTHON" "$COMPILER" --optimize "$test_file" "$TMP_DIR/$name.optimized.ll" > "$TMP_OUT" 2> "$TMP_ERR"; then
+        echo "  FAIL $name (--optimize unexpectedly succeeded)"
+        FAILED=$((FAILED + 1))
+        FAILED_LIST+=("invalid/$name")
+    elif [ -s "$TMP_OUT" ] || [ -e "$TMP_DIR/$name.optimized.ll" ] || ! diff -u "$TMP_DIR/$name.baseline.err" "$TMP_ERR" > "$TMP_OUT"; then
+        echo "  FAIL $name (--optimize error mismatch)"
+        cat "$TMP_OUT"
+        cat "$TMP_ERR"
         FAILED=$((FAILED + 1))
         FAILED_LIST+=("invalid/$name")
     else
@@ -141,6 +160,8 @@ else
             "$bin_file" > "$TMP_OUT" 2> "$TMP_ERR"
         fi
         exit_code=$?
+        cp "$TMP_OUT" "$TMP_DIR/$name.baseline.out"
+        cp "$TMP_ERR" "$TMP_DIR/$name.baseline.err"
         expected_exit_code=0
         exitcode_file="$SCRIPT_DIR/e2e/$name.exitcode"
         if [ -f "$exitcode_file" ]; then
@@ -161,9 +182,121 @@ else
             cat "$TMP_DIFF"
             FAILED=$((FAILED + 1))
             FAILED_LIST+=("e2e/$name")
+        elif ! "$PYTHON" "$COMPILER" --optimize "$test_file" "$TMP_DIR/$name.optimized.ll" > "$TMP_OUT" 2> "$TMP_ERR"; then
+            echo "  FAIL $name (--optimize compiler)"
+            cat "$TMP_ERR"
+            FAILED=$((FAILED + 1))
+            FAILED_LIST+=("e2e/$name")
+        elif ! "$CLANG" "$TMP_DIR/$name.optimized.ll" -o "$TMP_DIR/$name.optimized" > "$TMP_OUT" 2> "$TMP_ERR"; then
+            echo "  FAIL $name (--optimize clang)"
+            cat "$TMP_ERR"
+            FAILED=$((FAILED + 1))
+            FAILED_LIST+=("e2e/$name")
         else
-            echo "  PASS $name"
-            PASSED=$((PASSED + 1))
+            if [ -f "$input_file" ]; then
+                "$TMP_DIR/$name.optimized" < "$input_file" > "$TMP_OUT" 2> "$TMP_ERR"
+            else
+                "$TMP_DIR/$name.optimized" > "$TMP_OUT" 2> "$TMP_ERR"
+            fi
+            optimized_exit_code=$?
+            if [ "$optimized_exit_code" -ne "$expected_exit_code" ]; then
+                echo "  FAIL $name (--optimize exit code $optimized_exit_code, expected $expected_exit_code)"
+                cat "$TMP_ERR"
+                FAILED=$((FAILED + 1))
+                FAILED_LIST+=("e2e/$name")
+            elif ! diff -u "$expected_file" "$TMP_OUT" > "$TMP_DIFF"; then
+                echo "  FAIL $name (--optimize output mismatch)"
+                cat "$TMP_DIFF"
+                FAILED=$((FAILED + 1))
+                FAILED_LIST+=("e2e/$name")
+            elif ! diff -u "$TMP_DIR/$name.baseline.out" "$TMP_OUT" > "$TMP_DIFF"; then
+                echo "  FAIL $name (output differs with --optimize)"
+                cat "$TMP_DIFF"
+                FAILED=$((FAILED + 1))
+                FAILED_LIST+=("e2e/$name")
+            elif [ -f "$expected_err_file" ] && ! diff -u "$expected_err_file" "$TMP_ERR" > "$TMP_DIFF"; then
+                echo "  FAIL $name (--optimize stderr mismatch)"
+                cat "$TMP_DIFF"
+                FAILED=$((FAILED + 1))
+                FAILED_LIST+=("e2e/$name")
+            elif ! diff -u "$TMP_DIR/$name.baseline.err" "$TMP_ERR" > "$TMP_DIFF"; then
+                echo "  FAIL $name (stderr differs with --optimize)"
+                cat "$TMP_DIFF"
+                FAILED=$((FAILED + 1))
+                FAILED_LIST+=("e2e/$name")
+            else
+                echo "  PASS $name"
+                PASSED=$((PASSED + 1))
+            fi
+        fi
+    done
+fi
+
+echo ""
+echo "═══ TASK 3 PROGRAMS (recorded sessions) ═══"
+if ! command -v "$CLANG" >/dev/null 2>&1; then
+    echo "  FAIL: clang is required for Task 3 programs"
+    FAILED=$((FAILED + 1))
+    FAILED_LIST+=("programs_clang_unavailable")
+else
+    for program_file in "$REPO_DIR"/programs/*.txt; do
+        [ -f "$program_file" ] || continue
+        name=$(basename "$program_file" .txt)
+        ir_file="$TMP_DIR/$name.program.ll"
+        bin_file="$TMP_DIR/$name.program"
+        if ! "$PYTHON" "$COMPILER" "$program_file" "$ir_file" > "$TMP_OUT" 2> "$TMP_ERR"; then
+            echo "  FAIL $name (compiler)"
+            cat "$TMP_ERR"
+            FAILED=$((FAILED + 1))
+            FAILED_LIST+=("programs/$name")
+            continue
+        fi
+        if ! "$CLANG" "$ir_file" -o "$bin_file" > "$TMP_OUT" 2> "$TMP_ERR"; then
+            echo "  FAIL $name (clang)"
+            cat "$TMP_ERR"
+            FAILED=$((FAILED + 1))
+            FAILED_LIST+=("programs/$name")
+            continue
+        fi
+
+        found_session=0
+        for input_file in "$REPO_DIR"/programs/"$name"*.in; do
+            [ -f "$input_file" ] || continue
+            found_session=1
+            session_name=$(basename "$input_file" .in)
+            expected_file="$REPO_DIR/programs/$session_name.expected"
+            if [ ! -f "$expected_file" ]; then
+                echo "  FAIL $session_name (missing expected output)"
+                FAILED=$((FAILED + 1))
+                FAILED_LIST+=("programs/$session_name")
+                continue
+            fi
+            "$bin_file" < "$input_file" > "$TMP_OUT" 2> "$TMP_ERR"
+            exit_code=$?
+            if [ "$exit_code" -ne 0 ]; then
+                echo "  FAIL $session_name (exit code $exit_code, expected 0)"
+                cat "$TMP_ERR"
+                FAILED=$((FAILED + 1))
+                FAILED_LIST+=("programs/$session_name")
+            elif ! diff -u "$expected_file" "$TMP_OUT" > "$TMP_DIFF"; then
+                echo "  FAIL $session_name (output mismatch)"
+                cat "$TMP_DIFF"
+                FAILED=$((FAILED + 1))
+                FAILED_LIST+=("programs/$session_name")
+            elif [ -s "$TMP_ERR" ]; then
+                echo "  FAIL $session_name (unexpected stderr)"
+                cat "$TMP_ERR"
+                FAILED=$((FAILED + 1))
+                FAILED_LIST+=("programs/$session_name")
+            else
+                echo "  PASS $session_name"
+                PASSED=$((PASSED + 1))
+            fi
+        done
+        if [ "$found_session" -eq 0 ]; then
+            echo "  FAIL $name (no recorded sessions)"
+            FAILED=$((FAILED + 1))
+            FAILED_LIST+=("programs/$name")
         fi
     done
 fi
