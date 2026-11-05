@@ -1,0 +1,5 @@
+🍃 count : duck32 <- 3;
+🍃 values : raft<duck32, count + 1> <- [10, 20, 30, 40];
+count <- 1;
+🔊 values[3];
+finish 0;

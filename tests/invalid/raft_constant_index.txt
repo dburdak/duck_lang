@@ -1,0 +1,4 @@
+🪨 length : duck32 <- 3;
+🍃 values : raft<duck32, 3> <- [1, 2, 3];
+values[length] <- 4;
+finish 0;

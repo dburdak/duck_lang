@@ -1,0 +1,2 @@
+🍃 values : raft<duck32, 0> <- [];
+finish 0;

@@ -1,0 +1,11 @@
+flock Counter 🪶
+    🍃 value : 🐥;
+    🍃 hatch increment () -> 🐥 🪶
+        value <- value + 1 ;
+        lay value ;
+    🪽
+🪽
+🍃 counter : Counter <- Counter { value: 4 };
+🍃 result : 🐥 <- counter.increment() ;
+🔊 counter ;
+finish 0 ;

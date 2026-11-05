@@ -1,0 +1,10 @@
+hatch factorial (value : 🐥) -> 🐥 🪶
+    🐤 value ≡ 0 🪶
+        lay 1 ;
+    🪽 🦢 🪶
+        lay value * factorial(value - 1) ;
+    🪽
+🪽
+🍃 result : 🐥 <- factorial(5) ;
+🔊 result ;
+finish 0 ;

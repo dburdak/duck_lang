@@ -1,0 +1,5 @@
+Program
+  Decl flags raft<🥚, 2> mut
+    RaftLiteral elements=0
+  Exit
+    Const 0

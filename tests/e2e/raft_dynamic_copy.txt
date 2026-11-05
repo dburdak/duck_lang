@@ -1,0 +1,7 @@
+🍃 count : duck32 <- 2;
+🍃 original : raft<duck32, count> <- [1, 2];
+🍃 copy : raft<duck32, count> <- original;
+copy[0] <- 7;
+🔊 original[0];
+🔊 copy[0];
+finish 0;

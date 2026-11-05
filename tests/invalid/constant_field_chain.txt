@@ -1,0 +1,9 @@
+flock Inner 🪶
+    🍃 value : 🐥;
+🪽
+flock Outer 🪶
+    🪨 inner : Inner;
+🪽
+🍃 outer : Outer <- Outer { inner: Inner { value: 1 } };
+outer.inner.value <- 2 ;
+finish 0 ;

@@ -1,0 +1,21 @@
+Program
+  Function first -> 🐥
+    Parameter items raft<🐥>
+    Block
+      Return
+        Index
+          Var items
+          Const 0
+  Decl samples raft<🐥, 3> mut
+    RaftLiteral elements=0
+  Assign Field
+    Index
+      Var samples
+      Const 0
+    Const 42
+  Decl result 🐥 mut
+    Call arguments=1 chain_ends_in_member_call=False
+      Var first
+      Var samples
+  Exit
+    Var result

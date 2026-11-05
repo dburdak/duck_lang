@@ -1,0 +1,7 @@
+hatch first (items : raft<duck32>) -> duck32 🪶
+    lay items[0];
+🪽
+🍃 samples : raft<duck32, 3> <- [];
+samples[0] <- 42;
+🍃 result : duck32 <- first(samples);
+finish result;

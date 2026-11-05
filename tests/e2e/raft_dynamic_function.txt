@@ -1,0 +1,7 @@
+hatch select (items : raft<duck32>, index : duck32) -> duck32 🪶
+    lay items[index];
+🪽
+🍃 count : duck32 <- 2;
+🍃 values : raft<duck32, count> <- [17, 29];
+🔊 select(values, 1);
+finish 0;

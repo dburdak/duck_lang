@@ -1,0 +1,13 @@
+Program
+  Decl result 🐥 mut
+    InlineExpr
+      Decl __inline_add_one_1_value 🐥 const
+        Const 8
+    InlineValue
+      BinOp +
+        Var __inline_add_one_1_value
+        Const 1
+  Print
+    Var result
+  Exit
+    Const 0

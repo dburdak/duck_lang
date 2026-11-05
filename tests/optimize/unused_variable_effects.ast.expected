@@ -1,0 +1,17 @@
+Program
+  Function announce -> 🐥
+    Block
+      Print
+        Const 7
+      Return
+        Const 7
+  ExprStmt
+    Call arguments=0 chain_ends_in_member_call=False
+      Var announce
+  ExprStmt
+    Call arguments=0 chain_ends_in_member_call=False
+      Var announce
+  ExprStmt
+    Read 🐥
+  Exit
+    Const 0

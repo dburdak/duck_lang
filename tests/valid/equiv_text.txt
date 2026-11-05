@@ -1,0 +1,8 @@
+hatch a : duck32 <- 10 ;
+hatch b : duck32 <- 20 ;
+a swap b ;
+quack a ;
+peck a eq 20 feather
+    quack b ;
+wing
+finish 0 ;

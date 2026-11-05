@@ -1,0 +1,9 @@
+hatch twice (value : duck32) -> duck32 🪶
+    lay value + 1;
+🪽
+hatch forgotten () -> duck32 🪶
+    lay 99;
+🪽
+🔊 twice(4);
+🔊 twice(5);
+finish 0;

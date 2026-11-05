@@ -1,0 +1,21 @@
+🍃 score : 🐥 <- 30 ;
+flock Bird 🪶
+    🍃 score : 🐥;
+    🪨 hatch parameter_wins (score : 🐥) -> 🐥 🪶
+        lay score ;
+    🪽
+    🪨 hatch field_wins () -> 🐥 🪶
+        lay score ;
+    🪽
+    🪨 hatch local_wins () -> 🐥 🪶
+        🍃 score : 🐥 <- 99 ;
+        score <- score + 1 ;
+        lay score ;
+    🪽
+🪽
+🍃 bird : Bird <- Bird { score: 20 };
+🔊 bird.parameter_wins(10) ;
+🔊 bird.local_wins() ;
+🔊 bird.field_wins() ;
+🔊 score ;
+finish 0 ;

@@ -1,0 +1,9 @@
+Program
+  Decl x 🐥 mut
+    Const 41
+  Print
+    BinOp +
+      Var x
+      Const 1
+  Exit
+    Const 0

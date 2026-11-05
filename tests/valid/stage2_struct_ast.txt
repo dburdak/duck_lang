@@ -1,0 +1,10 @@
+flock Counter 🪶
+    🍃 value : 🐥;
+    🪨 hatch current () -> 🐥 🪶
+        lay value ;
+    🪽
+🪽
+🍃 counter : Counter <- Counter { value: 1 };
+🍃 result : 🐥 <- counter.current() ;
+🔊 "ready" ;
+finish result ;

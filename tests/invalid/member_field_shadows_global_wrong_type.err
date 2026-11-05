@@ -1,0 +1,1 @@
+compilation error: line 5:13: function 'Bird.read_shade' returns 🐥, but 'lay' value has type 🥚

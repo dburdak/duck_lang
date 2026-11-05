@@ -1,0 +1,1 @@
+Outer { inner: Inner { value: 9 } }

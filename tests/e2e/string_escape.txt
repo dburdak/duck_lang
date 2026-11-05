@@ -1,0 +1,3 @@
+🔊 "hello\nworld" ;
+🔊 "say \"hi\"" ;
+finish 0 ;

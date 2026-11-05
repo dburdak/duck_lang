@@ -1,0 +1,11 @@
+Program
+  Decl index 🐥 const
+    Const 1
+  Decl values raft<🐥, 2> mut
+    RaftLiteral elements=2
+      Const 6
+      Const 9
+  Exit
+    Index
+      Var values
+      Var index

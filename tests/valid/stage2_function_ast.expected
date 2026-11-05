@@ -1,0 +1,16 @@
+Program
+  Function add -> 🐥
+    Parameter left 🐥
+    Parameter right 🐥
+    Block
+      Return
+        BinOp +
+          Var left
+          Var right
+  Decl result 🐥 mut
+    Call arguments=2 chain_ends_in_member_call=False
+      Var add
+      Const 2
+      Const 3
+  Exit
+    Var result

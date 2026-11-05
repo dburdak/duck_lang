@@ -1,0 +1,21 @@
+Program
+  Decl values raft<🐥, 3> mut
+    RaftLiteral elements=3
+      Const 3
+      Const 5
+      Const 8
+  Assign Field
+    Index
+      Var values
+      Const 1
+    BinOp +
+      Index
+        Var values
+        Const 0
+      Index
+        Var values
+        Const 2
+  Exit
+    Index
+      Var values
+      Const 1

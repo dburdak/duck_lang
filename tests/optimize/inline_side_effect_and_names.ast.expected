@@ -1,0 +1,23 @@
+Program
+  Decl result 🐥 mut
+    Const 10
+  Decl answer 🐥 mut
+    InlineExpr
+      Decl __inline_show_and_add_1_value 🐥 const
+        Var result
+      Decl __inline_show_and_add_2_result 🐥 mut
+        BinOp +
+          Var __inline_show_and_add_1_value
+          Const 2
+      Print
+        Var __inline_show_and_add_2_result
+    InlineValue
+      BinOp +
+        Var __inline_show_and_add_2_result
+        Var __inline_show_and_add_1_value
+  Print
+    Var result
+  Print
+    Var answer
+  Exit
+    Const 0

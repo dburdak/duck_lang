@@ -1,0 +1,3 @@
+🪨 values : raft<duck32, 2> <- [1, 2];
+values[0] <- 3;
+finish 0;

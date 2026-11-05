@@ -1,0 +1,8 @@
+flock Box 🪶
+    🍃 value : 🐥;
+    🍃 hatch change(other : Box) -> 🐥 🪶
+        other.value <- 2 ;
+        lay 0 ;
+    🪽
+🪽
+finish 0 ;

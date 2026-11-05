@@ -1,0 +1,6 @@
+flock Point 🪶
+    🍃 x : 🐥;
+🪽
+🍃 point : Point <- Point { x: 1 };
+🔊 point.y ;
+finish 0 ;
