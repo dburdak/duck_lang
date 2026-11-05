@@ -4,7 +4,6 @@ try:
     from ast_nodes import (
         ASTNode,
         AssignNode,
-        BinOpNode,
         BlockNode,
         CallNode,
         DeclNode,
@@ -16,10 +15,10 @@ try:
         IndexNode,
         PrintStmtNode,
         ProgramNode,
+        RaftLiteralNode,
         RaftType,
         ReadNode,
         ReturnNode,
-        StmtNode,
         StructNode,
         SwapStmtNode,
         VarNode,
@@ -30,7 +29,6 @@ except ImportError:
     from src.ast_nodes import (
         ASTNode,
         AssignNode,
-        BinOpNode,
         BlockNode,
         CallNode,
         DeclNode,
@@ -42,10 +40,10 @@ except ImportError:
         IndexNode,
         PrintStmtNode,
         ProgramNode,
+        RaftLiteralNode,
         RaftType,
         ReadNode,
         ReturnNode,
-        StmtNode,
         StructNode,
         SwapStmtNode,
         VarNode,
@@ -87,13 +85,39 @@ class Optimizer:
         }
         if not unused:
             return False
+        before = {
+            id(node)
+            for node in self.walk(self.program)
+            if (
+                isinstance(node, DeclNode) and getattr(node, "symbol", None) in unused
+            )
+            or (
+                isinstance(node, AssignNode)
+                and isinstance(node.target, VarNode)
+                and node.target.symbol in unused
+            )
+        }
         self.rewrite_statement_lists(self.program, unused)
-        return True
+        after = {
+            id(node)
+            for node in self.walk(self.program)
+            if (
+                isinstance(node, DeclNode) and getattr(node, "symbol", None) in unused
+            )
+            or (
+                isinstance(node, AssignNode)
+                and isinstance(node.target, VarNode)
+                and node.target.symbol in unused
+            )
+        }
+        return before != after
 
     def visit_reads(self, node, reads):
         if isinstance(node, (list, tuple)):
             for item in node:
                 self.visit_reads(item, reads)
+            return
+        if not isinstance(node, ASTNode):
             return
         if isinstance(node, VarNode):
             if node.symbol is not None:
@@ -122,12 +146,19 @@ class Optimizer:
             self.visit_reads(node, reads)
 
     def rewrite_statement_lists(self, node, unused):
+        if isinstance(node, (list, tuple)):
+            for item in node:
+                self.rewrite_statement_lists(item, unused)
+            return
+        if not isinstance(node, ASTNode):
+            return
         if isinstance(node, ProgramNode):
             node.items = self.rewrite_statements(node.items, unused)
             node.stmts = node.items
             return
         if isinstance(node, InlineExprNode):
             node.statements = self.rewrite_statements(node.statements, unused)
+            self.rewrite_statement_lists(node.value, unused)
             return
         if isinstance(node, FunctionNode):
             node.body.stmts = self.rewrite_statements(node.body.stmts, unused)
@@ -140,18 +171,26 @@ class Optimizer:
             node.stmts = self.rewrite_statements(node.stmts, unused)
             return
         if isinstance(node, IfNode):
+            self.rewrite_statement_lists(node.condition, unused)
             self.rewrite_statement_lists(node.then_block, unused)
             if node.else_block is not None:
                 self.rewrite_statement_lists(node.else_block, unused)
             return
         if isinstance(node, WhileNode):
+            self.rewrite_statement_lists(node.condition, unused)
             self.rewrite_statement_lists(node.body_block, unused)
+            return
+        for child in self.children(node):
+            self.rewrite_statement_lists(child, unused)
 
     def rewrite_statements(self, statements, unused):
         rewritten = []
         for statement in statements:
             self.rewrite_statement_lists(statement, unused)
-            if isinstance(statement, DeclNode) and statement.symbol in unused:
+            if isinstance(statement, DeclNode) and getattr(statement, "symbol", None) in unused:
+                if self.raft_declaration_has_runtime_effect(statement):
+                    rewritten.append(statement)
+                    continue
                 if self.has_side_effect(statement.init):
                     rewritten.append(ExprStmtNode(statement.line, statement.col, statement.init))
                 continue
@@ -165,6 +204,20 @@ class Optimizer:
                 continue
             rewritten.append(statement)
         return rewritten
+
+    def raft_declaration_has_runtime_effect(self, declaration):
+        type_name = declaration.type_name
+        if not isinstance(type_name, RaftType):
+            return False
+        if type_name.static_size is None:
+            return True
+        if isinstance(declaration.init, RaftLiteralNode):
+            return False
+        actual_type = getattr(declaration.init, "inferred_type", None)
+        return not (
+            isinstance(actual_type, RaftType)
+            and actual_type.static_size == type_name.static_size
+        )
 
     def has_side_effect(self, node):
         return any(
@@ -212,34 +265,35 @@ class Optimizer:
         return removed
 
     def inline_single_use_functions(self):
+        all_functions = self.callable_functions()
         functions = [
-            function
-            for function in self.program.items
-            if isinstance(function, FunctionNode) and function.struct_name is None
+            function for function in all_functions if function.struct_name is None
         ]
         if not functions:
             return False
-        call_counts = {function.name: 0 for function in functions}
-        call_graph = {function.name: set() for function in functions}
-        for function in functions:
-            for call in self.global_function_calls(function.body):
-                if call.function.name in call_counts:
-                    call_counts[call.function.name] += 1
-                    call_graph[function.name].add(call.function.name)
+        call_counts = {function.symbol: 0 for function in functions}
+        call_graph = {function.symbol: set() for function in all_functions}
+        for function in all_functions:
+            for called_function in self.called_functions(function.body):
+                if called_function in call_counts:
+                    call_counts[called_function] += 1
+                call_graph[function.symbol].add(called_function)
         for item in self.program.items:
             if isinstance(item, (FunctionNode, StructNode)):
                 continue
             for call in self.global_function_calls(item):
-                if call.function.name in call_counts:
-                    call_counts[call.function.name] += 1
+                if call.function in call_counts:
+                    call_counts[call.function] += 1
         recursive = {
-            name for name in call_graph if self.reaches_self(name, name, call_graph, set())
+            symbol
+            for symbol in call_graph
+            if self.reaches_self(symbol, symbol, call_graph, set())
         }
         candidates = {
             function.name: function
             for function in functions
-            if call_counts[function.name] == 1
-            and function.name not in recursive
+            if call_counts[function.symbol] == 1
+            and function.symbol not in recursive
             and self.is_inlineable(function)
         }
         if not candidates:
@@ -289,6 +343,8 @@ class Optimizer:
                     setattr(node, name, self.transform_calls(value, candidates))
             elif isinstance(value, tuple):
                 setattr(node, name, self.transform_calls(value, candidates))
+            elif isinstance(value, RaftType) and value.size_expr is not None:
+                value.size_expr = self.transform_calls(value.size_expr, candidates)
         if isinstance(node, ProgramNode):
             node.stmts = node.items
         if not isinstance(node, CallNode) or node.function is None:
@@ -315,15 +371,15 @@ class Optimizer:
             if parameter.symbol is not None:
                 local_symbols[parameter.symbol] = self.fresh_name(function.name, parameter.name)
         for node in self.walk(body):
-            if isinstance(node, DeclNode) and node.symbol is not None:
-                local_symbols[node.symbol] = self.fresh_name(function.name, node.name)
+            symbol = getattr(node, "symbol", None)
+            if isinstance(node, DeclNode) and symbol is not None:
+                local_symbols[symbol] = self.fresh_name(function.name, node.name)
         for node in self.walk((params, body)):
-            if isinstance(node, DeclNode) and node.symbol in local_symbols:
-                node.name = local_symbols[node.symbol]
-            elif isinstance(node, VarNode) and node.symbol in local_symbols:
-                node.name = local_symbols[node.symbol]
-            elif isinstance(node, AssignNode) and isinstance(node.target, VarNode):
-                node.name = node.target.name
+            symbol = getattr(node, "symbol", None)
+            if isinstance(node, DeclNode) and symbol in local_symbols:
+                node.name = local_symbols[symbol]
+            elif isinstance(node, VarNode) and symbol in local_symbols:
+                node.name = local_symbols[symbol]
         for parameter, argument in zip(params, call.args):
             declarations.append(
                 DeclNode(
@@ -332,7 +388,7 @@ class Optimizer:
                     parameter.type_name,
                     local_symbols[parameter.symbol],
                     False,
-                    copy.deepcopy(argument),
+                    argument,
                 )
             )
         return_statement = body.stmts[-1]
@@ -380,6 +436,9 @@ class Optimizer:
             yield value
             for child in self.children(value):
                 yield from self.walk(child)
+        elif isinstance(value, RaftType):
+            if value.size_expr is not None:
+                yield from self.walk(value.size_expr)
         elif isinstance(value, (list, tuple)):
             for item in value:
                 yield from self.walk(item)
@@ -394,6 +453,8 @@ class Optimizer:
                 yield value
             elif isinstance(value, (list, tuple)):
                 yield value
+            elif isinstance(value, RaftType) and value.size_expr is not None:
+                yield value.size_expr
 
     def _all_names(self, program):
         return {
