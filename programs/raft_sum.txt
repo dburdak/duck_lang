@@ -1,0 +1,31 @@
+flock Tally 🪶
+    🍃 total : duck32;
+    🍃 hatch add (value : duck32) -> duck32 🪶
+        total <- total + value;
+        lay total;
+    🪽
+🪽
+
+hatch sum_values (items : raft<duck32>, count : duck32) -> duck32 🪶
+    🍃 tally : Tally <- Tally { total: 0 };
+    🍃 index : duck32 <- 0;
+    🔁 index ≢ count 🪶
+        tally.add(items[index]);
+        index <- index + 1;
+    🪽
+    lay tally.total;
+🪽
+
+🔊 "How many numbers should I add? Enter a positive count.";
+🍃 count : duck32 <- 👂 duck32;
+🍃 values : raft<duck32, count> <- [];
+🍃 index : duck32 <- 0;
+🔊 "Enter the values, one per line:";
+🔁 index ≢ count 🪶
+    values[index] <- 👂 duck32;
+    index <- index + 1;
+🪽
+🍃 total : duck32 <- sum_values(values, count);
+🔊 "Total:";
+🔊 total;
+finish 0;

@@ -1,0 +1,325 @@
+AI USAGE DISCLOSURE — Stage 3
+
+AI tools used during Stage 3: AI assistant using Copilot SDK in VS Code and Google Gemini
+(Gemini web app; the user-provided chat link requires sign-in). This first exchange only involved
+explaining the rubric and submission process; no code was generated or edited for it.
+Workspace tools used in the work described below include `functions.view`, `functions.rg`,
+`functions.glob`, `functions.bash`, `functions.apply_patch`, and `functions.ask_user`.
+
+Work covered: explaining the Stage 3 grading warning and submission instructions.
+
+Prompts sent:
+1. "поясни що це означає:
+ai_usage_3.txt is required: a missing or incomplete file is a grade of 0 for the stage. IR assembled from strings instead of
+the builder gets 0 for the task it appears in. Late submission is 0."
+2. "поясни ось цей пункт зі стейджами:
+1. By Friday 30 October: create the branch stage3 from stage2, push it, and open a draft pull request stage3
+→ main whose description names the feature you chose.
+2. When Stage 2 is graded, merge its pull request into main. The Stage 3 pull request then shows only Stage 3.
+3. Make sure the branch contains everything: the source code, grammar.ebnf, README.md, ai_usage_3.txt,
+the tests, the optimizer’s tests, programs/ and the test script. No generated .ll files, binaries or scratch files.
+4. Mark the pull request ready for review and request vovaskochko as a reviewer. Do not merge it before the
+review.
+5. Submit in Moodle: the link to the pull request and ai_usage_3.txt."
+3. "запамʼятай:
+AI USAGE DISCLOSURE (REQUIRED)
+Include ai_usage_3.txt in the pull request and attach it to the Moodle submission. A complete file contains:
+• the tools you used, with their names;
+• the prompts as you sent them, or links to the full chat transcripts that open without a login;
+• for each part of the work: what you took as it was, what you changed and why;
+• what you understood: a few sentences in your own words about the code you did not write yourself.
+If you did not use AI, write so in the file. A file that is missing, holds only links, does not say what was taken and
+what was changed, leaves a part of the work undisclosed, or contains […] is incomplete, and the
+stage is graded 0.
+
+бо я буду просити генерувати код, зберігай нотатки що  ти згенерував і що мені треба прокоментувати як я це розумію"
+
+What was used / changed: The assistant's two explanations were used as guidance about the rubric and
+workflow. No source code was generated, copied, or changed in this interaction.
+
+Understanding of code: No code written by AI or other people was reviewed in this interaction, so there
+is no code understanding to document for this part.
+
+Additional work covered: comparing the four proposed Stage 3 features against the current Duck Lang
+implementation and recommending a feature to consider. No source code was generated, copied, or changed.
+
+Prompt sent:
+"слухай, тут є завжання імплементували лише одну фічу зі списку, я обрала топ з якого треьба взяти одну, не можу обрати, тож наведи аргументацію порівняння чому вона підходить та не підходить для моєї duck language:
+1) Arrays a fixed-size array of a built-in type; index read and write; an index out of range on a
+constant is a compile error, on a value a run-time error that prints and exits; an array
+passed to a function
+2)Inheritance a structure declared as an extension of another: the base fields first in the layout, then
+the new ones; a duplicate field is an error; a member function of the base callable on the
+derived object; a virtual member function called through a table of function pointers
+stored in the object, so that a derived object used as the base calls its own version
+1
+3)Generics a template function or structure with a type parameter; instantiation by copying the
+tree and substituting the type; one generated function per used type, with a mangled
+name and a cache; a wrong instantiation is an error at the use site; optional: a
+requirement on the type checked before the copy
+
+4)Encapsulation public / private on fields and member functions; access from outside the structure
+to a private member is an error with the member’s name; the README says what is
+private by default"
+
+What was used / changed: The assistant's repository-grounded comparison and recommendation are
+guidance only; no code was taken or changed. The analysis used the existing grammar, AST, semantic
+analyzer, LLVM code generator, and README to assess implementation fit and likely scope.
+
+No code from this comparison was used. The feature chosen afterward was `raft` arrays, not
+encapsulation.
+
+Additional work covered: identifying the design decisions needed before implementing the proposed
+fixed-size `raft` arrays feature. No source code was generated, copied, or changed.
+
+Prompt sent:
+"давай імплементуємо масиви, в моваі буде нащзиватись raft, вони мені найбільше подобаються, що мені треба визначити перед тим як ти почнеш імплементувати, що мені треба обрати та між чим?:
+Arrays a fixed-size array of a built-in type; index read and write; an index out of range on a
+constant is a compile error, on a value a run-time error that prints and exits; an array
+passed to a function
+
+Deliverables for the feature:
+• its rules in the README, with two example programs, and its syntax in grammar.ebnf;
+• at least 3 valid and 3 invalid test programs named after it, run by your test script;
+• in the README, one excerpt of the IR your compiler produces for it — ten to twenty lines of output.ll
+— with three sentences on what each part does: the table of function pointers and the indirect call, the
+two instantiations with their names, the back edge of the loop, the structure that keeps a coroutine’s state. The
+builder writes the IR; the excerpt shows you can read it.
+
+після того як все зробиш пропиши пояснения что и за какой логикой ты менял, чтобы я поняла все"
+
+What was used / changed: This assistant response is to be used as planning guidance only. The repository
+was inspected to identify current declaration/type syntax, test behavior, and README conventions. No
+code or README/grammar changes have been made for raft yet.
+
+Final design: `raft<type, size>` has a length evaluated once at creation and fixed afterward. It can
+be initialized with values or with default zero/false values; indexing supports reads and writes,
+known out-of-range indices are rejected during compilation, and dynamic indices are checked at
+runtime. Passing a raft to a function makes a copy. The unrelated IR checklist for other features was
+not part of the arrays implementation.
+
+Stage 3 implementation decisions supplied by the user:
+"type_syntax=raft<type, size>, initialization=було б добре щоб була можливість і одразу створити та заповнити масив елементами і також, щоб була можливість не задавати елементи, а вони заповнюються нульовими або пустими елементами, щоб потім замінювати їх на конкретні елементи доступаючись за індексом, function_passing=value, constant_index=named_constants, runtime_bounds_error=stderr_1, ir_requirement=всі вимоги для фіч які ми не реалізовуємо забудь, вони не важливі, custom_choices="
+
+Tools used for the implementation: AI assistant using Copilot SDK in VS Code; `functions.ask_user`
+to confirm language rules; `functions.view` and `functions.rg` to inspect existing code; `functions.apply_patch`
+to edit source, tests, grammar, and README; `functions.bash` to run the compiler, LLVM/clang checks,
+the test script, and Git checks.
+
+What was generated and why:
+- Added a `RaftType`, raft literal, and index expression to the AST, plus lexer/parser support for
+  `raft<type, size>`, `[value, ...]`, `[]`, and `array[index]`. This gives the compiler structured
+  syntax and type information instead of treating raft syntax as text.
+- Added semantic checks for positive sizes, built-in element types, exact initializer lengths,
+  element/index types, mutability, and compile-time bounds. Immutable integer declarations whose
+  values can be evaluated from literals and arithmetic are tracked so a named constant index can
+  be diagnosed at compile time.
+- Added LLVM descriptor types and builder operations for initialization, element access and
+  assignment. A descriptor holds the fixed-at-creation length and data pointer; dynamic indices
+  are checked against that stored length, and an invalid index writes the agreed message to standard
+  error and exits with status 1. Function parameters receive a new buffer containing a copy of the
+  elements, following the user's choice of value semantics.
+- Added raft-focused valid, invalid, and end-to-end programs, including checks for standard-error
+  output; updated the test runner to compare stderr when an `.err` fixture is present.
+- Added the raft rules, two example programs, grammar productions, and a 17-line excerpt copied from
+  actual builder-generated LLVM IR, with a three-sentence explanation. The user explicitly said to
+  ignore the unrelated virtual-dispatch, generic-instantiation, and coroutine requirements.
+- A lexer/parser diagnostic adjustment preserves the pre-existing error for a stray `<`, because
+  the new type syntax requires recognizing `<` after the `raft` keyword.
+
+What was taken as-is or changed: Existing compiler stages, the `llvmlite` IR builder, type checking,
+mutability rules, test fixture format, and README conventions were reused. No existing array
+implementation existed to copy. The chosen design details above were implemented according to the
+user's answers; the initialization syntax uses a full literal or `[]` for zero/false initialization.
+No generated `.ll` file or binary was added to the repository.
+
+Follow-up question:
+"а в ці реалізації можливо записати як розмір динамічну змінну або додати до списку динамічну змінну, адже таке має працювати"
+
+Answer summary: A raft's size is deliberately a positive integer literal in its type because the
+selected feature is fixed-size arrays. Values of variables and other run-time expressions can be
+elements in a raft literal, and a mutable raft can be updated by index. The implementation does not
+provide an append/push operation; dynamically changing the number of elements would be a different
+resizable-array feature. No source code was changed in response to this question.
+
+Initial interpretation, later corrected: I first described `raft` size as a compile-time literal,
+assuming that fixed-size meant its length must be known during compilation. The user clarified that
+the size may be computed from a number, expression, or variable when the raft is created, but the
+raft's length cannot change afterward. The implementation below follows that clarification.
+
+Further clarification from the user:
+"попередній запис для ініціалізації був досить зручний — raft<duck32, n>, де n це розмір який був заданий десь вище в коді, що тобі не подобається?, size_expression=можна і числом, і виразом і змінною що була задана або змінена десь вище в коді, просто щоб вона проходила перевірку на довжину, більше нуля і треба певно якусь верхню межу задати, щоб воно не зжерло купу памʼяті"
+
+Answer summary: There is nothing wrong with the `raft<duck32, n>` syntax itself. The initial
+compile-time-only design would not support the user's intended semantics, so the size expression
+must instead be evaluated once when the raft is created, validated, and stored with the data. A later
+change to the source variable does not resize that raft.
+
+User's follow-up design choices:
+- "memory_limit=1MiB"
+- "function_size_rule=any_size_copy"
+- "runtime_errors=compile_when_known"
+- "global_storage=yes"
+
+The user clarified that a size expression may be a number, an expression, or a variable assigned or
+changed earlier in the program, and suggested a positive-size check and upper bound to limit memory.
+The chosen behavior is a 1 MiB maximum per raft, with dynamic invalid sizes reported at run time and
+statically known invalid sizes rejected at compile time. Function parameters use `raft<element_type>`
+and accept any length; global and local raft variables are supported.
+
+Additional implementation work: replaced the compile-time LLVM array type with a descriptor holding
+the chosen run-time length and a pointer to element storage. The length expression is evaluated once
+at declaration, then checked for positivity and the per-element-type limit; later changes to its
+source variable do not resize an existing raft. Dynamic index checks compare against the stored
+length. Local storage uses dynamic LLVM stack allocation with stack-save/restore at block boundaries,
+so repeated block execution releases its raft storage. Globals hold descriptors initialized during
+main. Function arguments and whole-raft copies allocate and copy element data, preserving value
+semantics; size mismatches are diagnosed at compile time when both lengths are known, or reported
+at run time otherwise. Added coverage for changed size variables, expressions, globals, any-length
+parameters, deep copies, zero fill, memory limits, runtime failures, and loop scopes. Updated the
+README and grammar for dynamic fixed-after-creation lengths.
+
+Остаточне розуміння raft: «Масив створюється з типом `raft<тип, довжина>`. Довжина має бути
+додатня, і є обмеження 1 MiB для конкретного типу елементів. Можна або записати всі елементи в
+літералі, або написати `[]`, тоді елементи будуть нульові або `false`. Чи можна змінювати елементи
+задається ключовим словом так само як для звичайних змінних. Індексація починається з нуля.
+Значення індекса і розмір можуть бути пораховані під час компіляції або вже під час виконання
+програми, але довжина самого масиву фіксується коли він створився. При передачі масиву у функцію
+вона працює з копією, а не з оригіналом. Якщо значення індексу вже відоме, його можна перевірити
+під час семантичного аналізу; якщо ні, кодогенератор вставляє перевірку, яка виконується під час
+роботи програми».
+
+Ще про реалізацію: «Розмір рахується коли створюється raft, а далі зберігається разом з адресою
+його даних. Тому якщо змінна, з якої брали розмір, зміниться пізніше, сам масив не зміниться.
+Коли індекс не можна знати під час компіляції, компілятор додає перевірку, щоб під час запуску
+не читати за межами масиву. Функція отримує копію даних, тому зміни копії не міняють початковий
+масив».
+
+Additional work covered: completing Task 3 with an interactive program that exercises rafts,
+functions, a structure member function, input, and output.
+
+Prompt sent:
+"виконай
+
+TASK 3 — THE REAL PROGRAM (4 POINTS)
+A program in your language that a person can use: it prints prompts, reads input, computes something and prints
+results. It uses at least one structure with a member function, at least one function, read and print, and your
+feature — visibly, not in a corner. What it does is up to you: a small game, a calculator over structures, a
+filter over values, a scheduler of tasks if you built threads or coroutines.
+• programs/NAME.txt — the program; a stranger can follow the prompts.
+• At least two recorded sessions: programs/NAME.in with what the user types and programs/NAME.expected
+with the exact output, prompts included. Your test script runs them.
+• The exact commands that turn the program into a native binary with llc and clang, in the README; lli is
+not the deliverable.
+• Ten lines in the README: what the program does, where it uses your feature, and the command that runs each
+session."
+
+What was generated and why:
+- Added `programs/raft_sum.txt`, an interactive summation program. It reads a positive count, stores
+  that many inputs in a runtime-sized raft, passes the raft to `sum_values`, and uses `Tally.add` to
+  accumulate the result.
+- Added two input/output session pairs: one for three numbers and one for a single number.
+- Extended `tests/run_tests.sh` to compile the program, link it, run every recorded `.in` session,
+  and compare stdout exactly with the corresponding `.expected`.
+- Added ten numbered README lines describing the program and both session commands, plus the exact
+  `compiler.py`, `llc`, and `clang` build commands.
+
+Tools used for this part: AI assistant using Copilot SDK in VS Code; `functions.view`, `functions.rg`,
+`functions.apply_patch`, and `functions.bash`; the project compiler and `clang` for compilation and
+recorded-session validation.
+
+What was taken as-is or changed: The existing raft, function, structure/member-function, input, and
+printing syntax was used. A first version tried to validate the input count with `<` and `>`, but
+inspection of `grammar.ebnf` showed comparisons only support equality and inequality, so those invalid
+expressions were removed. The prompt asks for a positive count; the raft's runtime size checks reject
+nonpositive or over-limit sizes.
+
+Моє розуміння програми: «Програма читає кількість чисел, створює raft такої довжини, читає числа
+в його елементи й передає масив та кількість у `sum_values`. Функція проходить елементи циклом і
+додає кожен через `Tally.add`, який змінює поле `total`; потім програма друкує суму. Тобто raft
+використовується саме для введених даних, а не просто окремо для прикладу».
+
+Validation: `bash tests/run_tests.sh` compiled `programs/raft_sum.txt`, ran both recorded sessions,
+and compared exact output successfully. The documented native build also succeeded with Homebrew
+LLVM 22.1.8 using `/opt/homebrew/opt/llvm/bin/llc`, followed by `clang`; both recorded sessions
+matched their expected output.
+
+Additional work covered: implementing the AST optimizer requested for Stage 3.
+
+Prompt sent:
+"окей тепер додай функціонал оптимізатора, можливо випиши його в окремий файл якщо так буде логічно:
+Three transformations of the checked tree behind --optimize, run before code generation:
+• Unused variables (1 point) — a declaration nobody reads is removed with its assignments, again and again until
+a pass removes nothing; scopes and shadowing are respected; an expression that calls a function or read() is
+never dropped.
+• Unused functions (1 point) — a function nobody calls is removed with its whole body, again and again:
+removing a body may leave another function unused.
+• Inlining (2 points) — a function called exactly once is replaced at its call site by its body: each parameter becomes
+a local declaration initialised with the argument, the exit of the body becomes the value that stands where
+the call stood, names are renamed so they cannot collide with the caller’s, and the function is then removed as
+unused. A recursive function is never inlined. The README says which shapes you inline and which you leave
+alone, for example a body that leaves through exit inside an if.
+The proof is mechanical. A folder of at least 6 programs, two per transformation, each with the expected tree after
+--optimize --ast and the expected output; the output is the same with and without the flag. Every other test
+of your suite also passes with the flag. Add to the README one before/after excerpt of the IR for the inlining of
+one function"
+
+Tools used for this part: AI assistant using Copilot SDK in VS Code; `functions.view`, `functions.rg`,
+`functions.apply_patch`, and `functions.bash`; Python, `llvmlite`, and `clang` to inspect AST/IR and
+run the tests.
+
+What was generated and why:
+- Added `src/optimizer.py` with iterative dead-variable removal, reachability-based removal of unused
+  global and member functions, and inlining for a deliberately narrow set of single-call, nonrecursive
+  global functions. Symbol identity drives variable-use analysis so shadowing does not conflate names.
+- Added `ExprStmtNode` and `InlineExprNode`, and connected them to semantic analysis and LLVM emission.
+  The expression-with-statements node lets a call's parameter declarations and cloned body appear
+  where an expression result is needed. Fresh local names prevent collisions after cloning.
+- Added `--optimize` for `--ast`, `--ir`, and file-to-file compilation. The optimizer rechecks the
+  transformed tree before code generation.
+- Added six optimizer programs with expected optimized ASTs and output. Extended the runner to check
+  optimized behavior against baseline behavior for the existing valid, invalid, and end-to-end tests.
+- Documented supported inlining shapes and limits, optimization behavior, and builder-generated
+  before/after IR excerpts. Runtime-sized raft declarations are retained when deleting them could
+  erase a run-time validation or allocation effect.
+
+What was taken as-is or changed: The existing AST, resolved semantic symbols, and LLVM builder were
+used rather than introducing a second representation or generating LLVM text manually. The optimizer
+was kept in its own module. Inlining is intentionally limited to straight-line global functions ending
+in `lay`; methods, recursion, control flow, exits, and raft-bearing functions are left unchanged to
+avoid altering scopes or control-flow semantics.
+
+Моє розуміння оптимізатора: «Компілятор шукає змінні, значення яких ніде не читають, і функції,
+які ніде не викликаються. Їх можна видалити, але якщо в ініціалізації змінної є виклик функції або
+`read()`, саму дію не можна викидати, навіть якщо значення вже нікому не треба. Після видалення
+прохід повторюється, бо через це можуть стати непотрібними інші змінні чи функції. При інлайнінгу
+виклик заміняється тілом функції: для параметра створюється локальна змінна з переданим значенням,
+а фінальний результат `lay` стає значенням виразу. Імена параметрів і локальних змінюються, щоб
+не було конфлікту; рекурсивні функції і функції з розгалуженнями чи циклами не інлайняться».
+
+Validation result for this change: `bash tests/run_tests.sh` completed with 163 passed and 0 failed.
+The parser-only `wide_literal_in_finish` fixture is intentionally excluded from semantic optimization:
+it tests parser acceptance of a literal that semantic analysis correctly rejects as out of range.
+
+Additional AI tool used: Google Gemini, in the Gemini web app. The user supplied this conversation
+link: https://gemini.google.com/app/e64abfdfccee200b
+The user reports that the link requires sign-in, so it is not relied on as the disclosure of prompts.
+The exact user prompts transcribed from the supplied Gemini log are included below. Gemini responses
+contained explanations and example Python/LLVM IR code. I understood the descriptor idea (storing
+the length and a pointer to the elements) from Gemini's explanations, and chose the name `raft` after
+asking for a duck-themed array keyword. I did not copy Gemini's code. Copilot generated the compiler
+implementation according to my design decisions, including run-time sizing, bounds checks, global
+rafts, and value-copy function arguments.
+
+Prompts sent to Gemini:
+1. "як мені імплементувати arrays за допмогою IR в мою мову: **Duck Lang** is an emoji-based programming language compiled using Python. Its syntax replaces traditional keywords and types with duck-themed emojis and symbols. ось граматика: program ::= { top_item } finish top_item ::= func_decl | struct_decl | statement func_decl ::= &quot;hatch&quot; ident &quot;(&quot; [ params ] &quot;)&quot; &quot;-&gt;&quot; type block params ::= param { &quot;,&quot; param } param ::= ident &quot;:&quot; type struct_decl ::= &quot;flock&quot; ident &quot;🪶&quot; { member } &quot;🪽&quot; member ::= field_decl | member_func_decl field_decl ::= member_specifier ident &quot;:&quot; type &quot;;&quot; member_func_decl ::= member_specifier &quot;hatch&quot; ident &quot;(&quot; [ params ] &quot;)&quot; &quot;-&gt;&quot; type block member_specifier ::= &quot;🍃&quot; | &quot;🪨&quot; | &quot;leaf&quot; | &quot;hatch&quot; | &quot;stone&quot; | &quot;rock&quot; statement ::= var_decl | simple_stmt | if_stmt | while_stmt | print_stmt | return_stmt var_decl ::= specifier ident &quot;:&quot; type &quot;&lt;-&quot; expr &quot;;&quot; specifier ::= &quot;🍃&quot; | &quot;leaf&quot; | &quot;hatch&quot; | &quot;🪨&quot; | &quot;stone&quot; | &quot;rock&quot; simple_stmt ::= assignable [ &quot;&lt;-&quot; expr | swap_tail ] &quot;;&quot; | postfix &quot;;&quot; assignable ::= ident { &quot;.&quot; ident } swap_tail ::= swap_op assignable { swap_op assignable } swap_op ::= &quot;🔀&quot; | &quot;swap&quot; print_stmt ::= &quot;🔊&quot; ( string | expr ) &quot;;&quot; return_stmt ::= &quot;lay&quot; expr &quot;;&quot; if_stmt ::= if_keyword expr block [ else_keyword block ] if_keyword ::= &quot;🐤&quot; | &quot;peck&quot; else_keyword ::= &quot;🦢&quot; | &quot;swan&quot; while_stmt ::= while_keyword expr block while_keyword ::= &quot;🔁&quot; | &quot;waddle&quot; block ::= block_open block_item { block_item } block_close block_item ::= statement | finish block_open ::= &quot;🪶&quot; | &quot;feather&quot; block_close ::= &quot;🪽&quot; | &quot;wing&quot; finish ::= finish_keyword expr &quot;;&quot; finish_keyword ::= &quot;🏁&quot; | &quot;finish&quot; | &quot;fly&quot; type ::= &quot;🐥&quot; | &quot;duck32&quot; | &quot;🦆&quot; | &quot;duck64&quot; | &quot;🥚&quot; | &quot;pond_bool&quot; | ident bool_literal ::= &quot;🪺&quot; | &quot;nest_full&quot; | &quot;🪹&quot; | &quot;nest_empty&quot; expr ::= arith [ cmp_op arith ] arith ::= term { (&quot;+&quot; | &quot;-&quot;) term } term ::= postfix { (&quot;*&quot; | &quot;/&quot;) postfix } postfix ::= primary { &quot;.&quot; ident | call_suffix } call_suffix ::= &quot;(&quot; [ arguments ] &quot;)&quot; primary ::= ident | number | bool_literal | string | &quot;(&quot; expr &quot;)&quot; | object_creation | read_expr arguments ::= expr { &quot;,&quot; expr } object_creation ::= ident &quot;{&quot; object_field { &quot;,&quot; object_field } &quot;}&quot; object_field ::= ident &quot;:&quot; expr read_expr ::= ( &quot;👂&quot; | &quot;read&quot; ) type cmp_op ::= &quot;≡&quot; | &quot;eq&quot; | &quot;≢&quot; | &quot;neq&quot; string ::= &quot;\\&quot;&quot; { string_char | escape } &quot;\\&quot;&quot; string_char ::= ? any character except quotation mark, backslash, and line break ? escape ::= &quot;\\\\&quot; ? any character except line break ? ident ::= ( letter | &quot;_&quot; ) { letter | digit | &quot;_&quot; } letter ::= &quot;a&quot; | ... | &quot;z&quot; | &quot;A&quot; | ... | &quot;Z&quot; digit ::= &quot;0&quot; | ... | &quot;9&quot; number ::= digit { digit } whitespace ::= &quot; &quot; | &quot;\\t&quot; | &quot;\\r&quot; | &quot;\\n&quot; (* Whitespace may appear between tokens. The lexer does not support comments. *) (* A block must contain at least one block_item; empty blocks are rejected. *) (* `hatch` is both a variable specifier and a function keyword. The parser recognizes `hatch ident (` as a function declaration by lookahead. *) (* Assignment and swap require assignable targets; a postfix statement is valid only when it ends in a function or member-function call. *) (* Text keyword synonyms: duck32/duck64/pond_bool, leaf/hatch/stone/rock, nest_full/nest_empty, peck/swan/waddle, feather/wing, finish/fly, swap, quack, eq/neq, flock/lay/read. *)"
+2. "навели приклади пайток коду який через ir створює масив. А це теж саме що й створбвати string через ir"
+3. "як можна назвати масиви ось це ключове слово, щоб воно було доречне до качиної мови"
+4. "поясни ці вимоги до імплементації масивів: Arrays a fixed-size array of a built-in type; index read and write; an index out of range on a constant is a compile error, on a value a run-time error that prints and exits; an array passed to a function"
+5. "поясни це питання"
+6. "поясни що він питає"
+7. "знову не розумію що означаж глобальні"
+8. "що тут просять: TASK 3 — THE REAL PROGRAM (4 POINTS) A program in your language that a person can use: it prints prompts, reads input, computes something and prints results. It uses at least one structure with a member function, at least one function, read and print, and your feature — visibly, not in a corner. What it does is up to you: a small game, a calculator over structures, a filter over values, a scheduler of tasks if you built threads or coroutines. - programs/NAME.txt — the program; a stranger can follow the prompts. - At least two recorded sessions: programs/NAME.in with what the user types and programs/NAME.expected with the exact output, prompts included. Your test script runs them. - The exact commands that turn the program into a native binary with llc and clang, in the README; lli is not the deliverable. - Ten lines in the README: what the program does, where it uses your feature, and the command that runs each session. Warning. Build Task 3 first, in the smallest form that runs, and grow it. A feature that no program uses is untested in the only way that matters here, and the program finds the bugs in the feature faster than the tests do."
+
+--- Full Gemini conversation log (supplied export) ---
+Імплементація масивів у Duck Lang через IRhttps://gemini.google.com/app/e64abfdfccee200bUser prompt: як мені імплементувати arrays за допмогою IR в мою мову: **Duck Lang** is an emoji-based programming language compiled using Python. Its syntax replaces traditional keywords and types with duck-themed emojis and symbols. ось граматика: program ::= { top_item } finish top_item ::= func_decl | struct_decl | statement func_decl ::= &quot;hatch&quot; ident &quot;(&quot; [ params ] &quot;)&quot; &quot;-&gt;&quot; type block params ::= param { &quot;,&quot; param } param ::= ident &quot;:&quot; type struct_decl ::= &quot;flock&quot; ident &quot;🪶&quot; { member } &quot;🪽&quot; member ::= field_decl | member_func_decl field_decl ::= member_specifier ident &quot;:&quot; type &quot;;&quot; member_func_decl ::= member_specifier &quot;hatch&quot; ident &quot;(&quot; [ params ] &quot;)&quot; &quot;-&gt;&quot; type block member_specifier ::= &quot;🍃&quot; | &quot;🪨&quot; | &quot;leaf&quot; | &quot;hatch&quot; | &quot;stone&quot; | &quot;rock&quot; statement ::= var_decl | simple_stmt | if_stmt | while_stmt | print_stmt | return_stmt var_decl ::= specifier ident &quot;:&quot; type &quot;&lt;-&quot; expr &quot;;&quot; specifier ::= &quot;🍃&quot; | &quot;leaf&quot; | &quot;hatch&quot; | &quot;🪨&quot; | &quot;stone&quot; | &quot;rock&quot; simple_stmt ::= assignable [ &quot;&lt;-&quot; expr | swap_tail ] &quot;;&quot; | postfix &quot;;&quot; assignable ::= ident { &quot;.&quot; ident } swap_tail ::= swap_op assignable { swap_op assignable } swap_op ::= &quot;🔀&quot; | &quot;swap&quot; print_stmt ::= &quot;🔊&quot; ( string | expr ) &quot;;&quot; return_stmt ::= &quot;lay&quot; expr &quot;;&quot; if_stmt ::= if_keyword expr block [ else_keyword block ] if_keyword ::= &quot;🐤&quot; | &quot;peck&quot; else_keyword ::= &quot;🦢&quot; | &quot;swan&quot; while_stmt ::= while_keyword expr block while_keyword ::= &quot;🔁&quot; | &quot;waddle&quot; block ::= block_open block_item { block_item } block_close block_item ::= statement | finish block_open ::= &quot;🪶&quot; | &quot;feather&quot; block_close ::= &quot;🪽&quot; | &quot;wing&quot; finish ::= finish_keyword expr &quot;;&quot; finish_keyword ::= &quot;🏁&quot; | &quot;finish&quot; | &quot;fly&quot; type ::= &quot;🐥&quot; | &quot;duck32&quot; | &quot;🦆&quot; | &quot;duck64&quot; | &quot;🥚&quot; | &quot;pond_bool&quot; | ident bool_literal ::= &quot;🪺&quot; | &quot;nest_full&quot; | &quot;🪹&quot; | &quot;nest_empty&quot; expr ::= arith [ cmp_op arith ] arith ::= term { (&quot;+&quot; | &quot;-&quot;) term } term ::= postfix { (&quot;*&quot; | &quot;/&quot;) postfix } postfix ::= primary { &quot;.&quot; ident | call_suffix } call_suffix ::= &quot;(&quot; [ arguments ] &quot;)&quot; primary ::= ident | number | bool_literal | string | &quot;(&quot; expr &quot;)&quot; | object_creation | read_expr arguments ::= expr { &quot;,&quot; expr } object_creation ::= ident &quot;{&quot; object_field { &quot;,&quot; object_field } &quot;}&quot; object_field ::= ident &quot;:&quot; expr read_expr ::= ( &quot;👂&quot; | &quot;read&quot; ) type cmp_op ::= &quot;≡&quot; | &quot;eq&quot; | &quot;≢&quot; | &quot;neq&quot; string ::= &quot;\&quot;&quot; { string_char | escape } &quot;\&quot;&quot; string_char ::= ? any character except quotation mark, backslash, and line break ? escape ::= &quot;\\&quot; ? any character except line break ? ident ::= ( letter | &quot;_&quot; ) { letter | digit | &quot;_&quot; } letter ::= &quot;a&quot; | ... | &quot;z&quot; | &quot;A&quot; | ... | &quot;Z&quot; digit ::= &quot;0&quot; | ... | &quot;9&quot; number ::= digit { digit } whitespace ::= &quot; &quot; | &quot;\t&quot; | &quot;\r&quot; | &quot;\n&quot; (* Whitespace may appear between tokens. The lexer does not support comments. *) (* A block must contain at least one block_item; empty blocks are rejected. *) (* `hatch` is both a variable specifier and a function keyword. The parser    recognizes `hatch ident (` as a function declaration by lookahead. *) (* Assignment and swap require assignable targets; a postfix statement is    valid only when it ends in a function or member-function call. *) (* Text keyword synonyms:    duck32/duck64/pond_bool, leaf/hatch/stone/rock, nest_full/nest_empty,    peck/swan/waddle, feather/wing, finish/fly, swap, quack, eq/neq,    flock/lay/read. *)Response: Для підтримки масивів у Duck Lang через IR (Intermediate Representation) необхідно розширити граматику мови, визначити модель пам'яті в IR (динамічна алокація в купі або стек) та імплементувати генерацію IR-інструкцій для алокації, індексування й перевірки меж (bounds checking).1. Зміни в граматиці Duck LangЩоб додати масиви в синтаксис мови, розширте правила для типів (type), виразів (primary), генерації (array_creation) та модифікуйте postfix для індексування:(* Додаємо тип масиву: 🌊 тип або [тип] *)type ::= &quot;🐥&quot; | &quot;duck32&quot; | &quot;🦆&quot; | &quot;duck64&quot; | &quot;🥚&quot; | &quot;pond_bool&quot; | ident | &quot;🌊&quot; type | &quot;[&quot; type &quot;]&quot;(* Створення масиву або літерал *)primary ::= ident | number | bool_literal | string | &quot;(&quot; expr &quot;)&quot; | object_creation | read_expr | array_literal | array_allocationarray_literal ::= &quot;[&quot; [ arguments ] &quot;]&quot;array_allocation ::= &quot;🌊&quot; type &quot;[&quot; expr &quot;]&quot;(* Індексування масиву arr[idx] *)postfix ::= primary { &quot;.&quot; ident | call_suffix | &quot;[&quot; expr &quot;]&quot; }(* Присвоєння елементу масиву arr[idx] &lt;- expr *)assignable ::= ident { &quot;.&quot; ident | &quot;[&quot; expr &quot;]&quot; }2. Модель пам'яті масиву в IRДля динамічних масивів найбільш ефективним є підхід із використанням структури-заголовка (Array Descriptor), яка зберігає довжину та вказівник на буфер з елементами.В IR масив представляється як вказівник на структуру:; LLVM IR опис структури масиву Duck Lang%DuckArray = type {&nbsp; &nbsp; i64,&nbsp; &nbsp; ; len: довжина масиву (кількість елементів)&nbsp; &nbsp; i64*&nbsp; &nbsp; ; data: вказівник на неперервний блок пам'яті з елементами}3. Генерація IR для основних операційА. Створення / Алокація масиву (🌊 🦆[10])Выделяємо пам'ять під заголовок %DuckArray (16 байт на 64-бітних системах).Обчислюємо розмір буфера: size=N×sizeof(element_type).Викликаємо malloc для створення буфера даних.Записуємо довжину в перше поле структури, а вказівник на дані — у друге.; --- 1. Виділення заголовка масиву ---%header_raw = call i8* @malloc(i64 16)%arr_ptr = bitcast i8* %header_raw to %DuckArray*; --- 2. Запис довжини масиву N = 10 ---%len_ptr = getelementptr inbounds %DuckArray, %DuckArray* %arr_ptr, i32 0, i32 0store i64 10, i64* %len_ptr; --- 3. Виділення буфера елементів (10 * 8 байт = 80 байт) ---%data_raw = call i8* @malloc(i64 80)%data_ptr = bitcast i8* %data_raw to i64*; --- 4. Збереження вказівника на дані в структуру ---%arr_data_ptr = getelementptr inbounds %DuckArray, %DuckArray* %arr_ptr, i32 0, i32 1store i64* %data_ptr, i64** %arr_data_ptrБ. Читання за індексом arr[idx] (з Bounds Checking)Перед кожним доступом за індексом у кодогенераторі IR формується перевірка виходу за межі:; Отримання довжини та індексу%len = load i64, i64* %len_ptr%idx = load i64, i64* %idx_ptr; Bounds Check: (idx &lt; 0 || idx &gt;= len)%is_neg = icmp slt i64 %idx, 0%is_out = icmp sge i64 %idx, %len%is_invalid = or i1 %is_neg, %is_outbr i1 %is_invalid, label %panic_out_of_bounds, label %access_okpanic_out_of_bounds:call void @duck_runtime_panic_out_of_bounds()unreachableaccess_ok:; Отримання вказівника на потрібний елемент%data_arr = load i64*, i64** %arr_data_ptr%elem_ptr = getelementptr inbounds i64, i64* %data_arr, i64 %idx; Читання значення%val = load i64, i64* %elem_ptrВ. Запис у масив arr[idx] &lt;- val;Процес ідентичний читанню, але замість load виконується store:access_ok:%data_arr = load i64*, i64** %arr_data_ptr%elem_ptr = getelementptr inbounds i64, i64* %data_arr, i64 %idxstore i64 %val_to_store, i64* %elem_ptr4. Реалізація у кодогенераторі на PythonЯкщо ви будуєте кодогенератор Duck Lang на Python (наприклад, з використанням llvmlite або власного генератора IR):class ArrayAccessAST:&nbsp; &nbsp; def __init__(self, array_expr, index_expr):&nbsp; &nbsp; &nbsp; &nbsp; self.array_expr = array_expr&nbsp; &nbsp; &nbsp; &nbsp; self.index_expr = index_expr&nbsp; &nbsp; def generate_ir(self, builder, env):&nbsp; &nbsp; &nbsp; &nbsp; # 1. Генерація IR для масиву та індексу&nbsp; &nbsp; &nbsp; &nbsp; arr_val = self.array_expr.generate_ir(builder, env)&nbsp; &nbsp; &nbsp; &nbsp; idx_val = self.index_expr.generate_ir(builder, env)&nbsp; &nbsp; &nbsp; &nbsp; # 2. Отримання вказівника на масив даних (поля 1 у структурі)&nbsp; &nbsp; &nbsp; &nbsp; data_ptr_addr = builder.gep(arr_val, [builder.int32(0), builder.int32(1)])&nbsp; &nbsp; &nbsp; &nbsp; data_ptr = builder.load(data_ptr_addr)&nbsp; &nbsp; &nbsp; &nbsp; # 3. Обчислення адреси елемента (GEP: base_ptr + index)&nbsp; &nbsp; &nbsp; &nbsp; elem_addr = builder.gep(data_ptr, [idx_val])&nbsp; &nbsp; &nbsp; &nbsp; # 4. Повернення завантаженого значення&nbsp; &nbsp; &nbsp; &nbsp; return builder.load(elem_addr)class ArrayAssignAST:&nbsp; &nbsp; def __init__(self, array_expr, index_expr, value_expr):&nbsp; &nbsp; &nbsp; &nbsp; self.array_expr = array_expr&nbsp; &nbsp; &nbsp; &nbsp; self.index_expr = index_expr&nbsp; &nbsp; &nbsp; &nbsp; self.value_expr = value_expr&nbsp; &nbsp; def generate_ir(self, builder, env):&nbsp; &nbsp; &nbsp; &nbsp; arr_val = self.array_expr.generate_ir(builder, env)&nbsp; &nbsp; &nbsp; &nbsp; idx_val = self.index_expr.generate_ir(builder, env)&nbsp; &nbsp; &nbsp; &nbsp; val = self.value_expr.generate_ir(builder, env)&nbsp; &nbsp; &nbsp; &nbsp; data_ptr_addr = builder.gep(arr_val, [builder.int32(0), builder.int32(1)])&nbsp; &nbsp; &nbsp; &nbsp; data_ptr = builder.load(data_ptr_addr)&nbsp; &nbsp; &nbsp; &nbsp; elem_addr = builder.gep(data_ptr, [idx_val])&nbsp; &nbsp; &nbsp; &nbsp; builder.store(val, elem_addr)5. Додаткові вбудовані функції (Runtime Builtins)Рекомендується додати оператор або властивість для отримання довжини масиву:Синтаксис: arr.len або 🔊 arr.length;IR реалізація: завантаження значення за зміщенням 0 в дескрипторі масиву (gep arr_ptr, 0, 0).User prompt: навели приклади пайток коду який через ir створює масив. А це теж саме що й створбвати string через irResponse: Створення рядка (String) в IR концептуально дуже схоже на створення масиву, оскільки рядок у своїй основі є масивом байтів (елементів i8). Однак між ними є кілька суттєвих відмінностей у реалізації.Чим String в IR відрізняється від Array?Тип елементів:Array (Duck Lang): Масив звичайних елементів (наприклад, 64-бітні числа i64 / 🦆 або булеві значення i1 / 🥚).String: Масив символів/байтів (i8 в LLVM IR).Статичні (літерали) vs Динамічні масиви:Строкові літерали (наприклад, &quot;Quack!&quot; у коді) відомі на етапі компіляції. Вони розміщуються в глобальній пам'яті (Global Constants) без використання malloc.Динамічні масиви та динамічні рядки (наприклад, зчитані через read або згенеровані під час виконання) виділяються в купі (Heap) через malloc.Null-термінатор (\0):Рядки в IR часто доповнюються нульовим байтом \0 наприкінці, щоб їх можна було передавати безпосередньо в системні C-функції (наприклад, printf або puts). Масиви чисел цього не потребують.Порівняльна таблиця моделей у пам'ятіХарактеристикаДинамічний масив (🌊 🦆[N])Рядок-літерал (&quot;Quack&quot;)Динамічний рядокМісце в пам'ятіКупа (Heap / malloc)Глобальний сегмент данихКупа (Heap / malloc)Тип даних в IR{ i64 len, i64* data }[6 x i8]{ i64 len, i8* data }Елементi64 (8 байт)i8 (1 байт)i8 (1 байт)Завершальний символВідсутній\0 (Null byte)Зазвичай \0Приклад Python-коду: Створення Array та String через llvmliteНижче наведено приклад кодогенератора на Python із використанням бібліотеки llvmlite (стандартного інструменту для створення LLVM IR у Python), який показує створення динамічного масиву чисел та статичного й динамічного рядків.from llvmlite import ir# ==========================================# 1. ІНІЦІАЛІЗАЦІЯ МОДУЛЯ ТА ТИПІВ DUCK LANG# ==========================================module = ir.Module(name=&quot;duck_lang_module&quot;)# Типи даних Duck Langi8 = ir.IntType(8)i32 = ir.IntType(32)i64 = ir.IntType(64) &nbsp; &nbsp; &nbsp; # 🦆 duck64duck_bool = ir.IntType(1)&nbsp; # 🥚 pond_bool# Структура дескриптора масиву Duck Lang: { i64 len, T* data }duck_array_type = ir.LiteralStructType([i64, ir.PointerType(i64)])# Зовнішня функція malloc для виділення пам'ятіmalloc_ty = ir.FunctionType(ir.PointerType(i8), [i64])malloc_func = ir.Function(module, malloc_ty, name=&quot;malloc&quot;)# Функція main для тестування IRmain_ty = ir.FunctionType(i32, [])main_func = ir.Function(module, main_ty, name=&quot;main&quot;)builder = ir.IRBuilder(main_func.append_basic_block(name=&quot;entry&quot;))# ==========================================# 2. СТВОРЕННЯ ДИНАМІЧНОГО МАСИВУ (Array)# ==========================================def emit_create_array(size_int: int):&nbsp; &nbsp; &quot;&quot;&quot;&nbsp; &nbsp; Генерує IR для створення масиву duck64[size_int].&nbsp; &nbsp; &quot;&quot;&quot;&nbsp; &nbsp; # А. Обчислення розмірів&nbsp; &nbsp; array_struct_size = i64(16) # i64 len (8B) + pointer (8B)&nbsp; &nbsp; data_bytes_size = i64(size_int * 8) # N елементів * 8 байт&nbsp; &nbsp; # Б. Алокація заголовка масиву в купі&nbsp; &nbsp; raw_struct = builder.call(malloc_func, [array_struct_size])&nbsp; &nbsp; arr_ptr = builder.bitcast(raw_struct, ir.PointerType(duck_array_type))&nbsp; &nbsp; # В. Запис довжини (len)&nbsp; &nbsp; len_gep = builder.gep(arr_ptr, [i32(0), i32(0)])&nbsp; &nbsp; builder.store(i64(size_int), len_gep)&nbsp; &nbsp; # Г. Алокація буфера даних&nbsp; &nbsp; raw_data = builder.call(malloc_func, [data_bytes_size])&nbsp; &nbsp; data_ptr = builder.bitcast(raw_data, ir.PointerType(i64))&nbsp; &nbsp; # Д. Запис вказівника на дані в структуру&nbsp; &nbsp; data_gep = builder.gep(arr_ptr, [i32(0), i32(1)])&nbsp; &nbsp; builder.store(data_ptr, data_gep)&nbsp; &nbsp; return arr_ptr# ==========================================# 3. СТВОРЕННЯ СТРОКОВОГО ЛІТЕРАЛУ (Static String)# ==========================================def emit_string_literal(text: str):&nbsp; &nbsp; &quot;&quot;&quot;&nbsp; &nbsp; Генерує IR для статичного рядка. &nbsp; &nbsp; Не використовує malloc, створює глобальну константу.&nbsp; &nbsp; &quot;&quot;&quot;&nbsp; &nbsp; # Додаємо null-термінатор для C-сумісності&nbsp; &nbsp; encoded_text = bytearray((text + &quot;\0&quot;).encode(&quot;utf-8&quot;))&nbsp; &nbsp; str_type = ir.ArrayType(i8, len(encoded_text))&nbsp; &nbsp; # Створюємо глобальну константу в модулі&nbsp; &nbsp; global_str = ir.GlobalVariable(module, str_type, name=f&quot;.str_{text[:4]}&quot;)&nbsp; &nbsp; global_str.global_constant = True&nbsp; &nbsp; global_str.initializer = ir.Constant(str_type, encoded_text)&nbsp; &nbsp; global_str.linkage = &quot;private&quot;&nbsp; &nbsp; # Приводим [N x i8]* до i8* (char*)&nbsp; &nbsp; zero = i32(0)&nbsp; &nbsp; str_ptr = builder.gep(global_str, [zero, zero])&nbsp; &nbsp; return str_ptr# ==========================================# 4. СТВОРЕННЯ ДИНАМІЧНОГО РЯДКА (Dynamic String)# ==========================================def emit_create_dynamic_string(length: int):&nbsp; &nbsp; &quot;&quot;&quot;&nbsp; &nbsp; Генерує IR для динамічного рядка (наприклад, для read string або склеювання).&nbsp; &nbsp; Працює ТАК САМО, як і масив, але для типу i8.&nbsp; &nbsp; &quot;&quot;&quot;&nbsp; &nbsp; string_struct_type = ir.LiteralStructType([i64, ir.PointerType(i8)])&nbsp; &nbsp; &nbsp; &nbsp; # 1. Виділяємо структуру { len, char* }&nbsp; &nbsp; raw_struct = builder.call(malloc_func, [i64(16)])&nbsp; &nbsp; str_struct_ptr = builder.bitcast(raw_struct, ir.PointerType(string_struct_type))&nbsp; &nbsp; # 2. Зберігаємо довжину&nbsp; &nbsp; len_gep = builder.gep(str_struct_ptr, [i32(0), i32(0)])&nbsp; &nbsp; builder.store(i64(length), len_gep)&nbsp; &nbsp; # 3. Виділяємо буфер символів (+1 байт для \0)&nbsp; &nbsp; raw_buffer = builder.call(malloc_func, [i64(length + 1)])&nbsp; &nbsp; &nbsp; &nbsp; # 4. Зберігаємо вказівник на буфер&nbsp; &nbsp; buf_gep = builder.gep(str_struct_ptr, [i32(0), i32(1)])&nbsp; &nbsp; builder.store(raw_buffer, buf_gep)&nbsp; &nbsp; return str_struct_ptr# Тестова кодогенераціяarr_ref = emit_create_array(size_int=5)static_str_ref = emit_string_literal(&quot;Quack World!&quot;)dyn_str_ref = emit_create_dynamic_string(length=12)builder.ret(i32(0))# Друк згенерованого LLVM IRprint(str(module))Згенерований LLVM IR (Результат роботи скрипту)Код вище згенерує наступний LLVM IR:; ModuleID = 'duck_lang_module'source_filename = &quot;duck_lang_module&quot;%.str_Quac = private constant [13 x i8] c&quot;Quack World!\00&quot;declare i8* @malloc(i64)define i32 @main() {entry:&nbsp; ; --- Створення масиву duck64[5] ---&nbsp; %0 = call i8* @malloc(i64 16)&nbsp; %1 = bitcast i8* %0 to { i64, i64* }*&nbsp; %2 = getelementptr { i64, i64* }, { i64, i64* }* %1, i32 0, i32 0&nbsp; store i64 5, i64* %2&nbsp; %3 = call i8* @malloc(i64 40)&nbsp; %4 = bitcast i8* %3 to i64*&nbsp; %5 = getelementptr { i64, i64* }, { i64, i64* }* %1, i32 0, i32 1&nbsp; store i64* %4, i64** %5&nbsp; ; --- Створення статичного рядка ---&nbsp; %6 = getelementptr [13 x i8], [13 x i8]* %.str_Quac, i32 0, i32 0&nbsp; ; --- Створення динамічного рядка ---&nbsp; %7 = call i8* @malloc(i64 16)&nbsp; %8 = bitcast i8* %7 to { i64, i8* }*&nbsp; %9 = getelementptr { i64, i8* }, { i64, i8* }* %8, i32 0, i32 0&nbsp; store i64 12, i64* %9&nbsp; %10 = call i8* @malloc(i64 13)&nbsp; %11 = getelementptr { i64, i8* }, { i64, i8* }* %8, i32 0, i32 1&nbsp; store i8* %10, i8** %11&nbsp; ret i32 0}Головний висновокЯкщо мова обробляє динамічний рядок (конкатенація, введення користувача), то IR-структура створення рядка абсолютно ідентична масиву Array&lt;i8&gt;.Якщо мова обробляє строковий літерал (текст у лапках у вихідному коді), то замість malloc використовується глобальна константа GlobalVariable, оскільки розмір і вміст тексту відомі ще під час компіляції.User prompt: як можна назвати масиви ось це ключове слово, щоб воно було доречне до качиної мовиResponse: Для Duck Lang назва масивів має продовжувати качину та водну тематику (як уже існуючі flock, hatch, waddle, lay, pond_bool).Найкращі концептуальні варіанти для емодзі та текстових синонімів:1. raft / 🌊 (Найбільш орнітологічно точний)Англійською мовою група качок, які плавають разом на воді, офіційно називається raft (пліт) або paddle.Емодзі: 🌊 (хвиля) або 🛶 (пліт)Текстові синоніми: raft, paddleКонтекст: Масив розглядається як &quot;пліт&quot; з елементів, що пливуть один за одним.# Оголошення масиву з 5 елементів duck64🍃 numbers : 🌊 🦆 &lt;- 🌊 🦆[5];leaf numbers : raft duck64 &lt;- raft duck64[5];2. clutch / 🪺 (Гніздова тематика)Clutch означає &quot;кладка яєць&quot; — природна послідовність або група елементів, що лежать разом у гнізді.Емодзі: 🪺 (гніздо з яйцями) або 🧺 (кошик)Текстові синоніми: clutch, brood (виводок)Контекст: Чудово поєднується з типом 🥚 (pond_bool) та функцією hatch (вилуплювання).# Кладка з булевих значень🍃 flags : 🪺 🥚 &lt;- [🪺, 🪹, 🪺];leaf flags : clutch pond_bool &lt;- [nest_full, nest_empty, nest_full];3. waddle_line / row / 🐾 (Вервечка каченят)Асоціація з тим, як каченята вишиковуються в суворий порядок і йдуть ланцюжком за матір'ю.Емодзі: 🐾 (сліди), 🦆 або 🐥 (квадратні дужки навколо емодзі)Текстові синоніми: row, waddle_line, chainКонтекст: Підкреслює впорядкованість та індексацію елементів (0-й крок, 1-й крок і т.д.).# Шеренга з чисел🍃 items : 🐾 🐥 &lt;- 🐾 🐥[10];leaf items : row duck32 &lt;- row duck32[10];4. puddle / stream / 💧 (Водна тематика)Якщо pond вже використовується для типів (pond_bool), для масивів підійдуть менші водойми, де елементи розміщені послідовно.Емодзі: 💧 (крапля) або 🪣 (резервуар)Текстові синоніми: puddle, streamКонтекст: Калюжа або струмок, що містить послідовність даних.🍃 data : 💧 🦆 &lt;- 💧 🦆[3];leaf data : puddle duck64 &lt;- puddle duck64[3];Рекомендація для граматики Duck LangЗ точки зору читабельності та гармонії з рештою мови, найкраще виглядає зв'язка 🌊 / raft:type ::= &quot;🐥&quot; | &quot;duck32&quot;  &nbsp; &nbsp; &nbsp; | &quot;🦆&quot; | &quot;duck64&quot;  &nbsp; &nbsp; &nbsp; | &quot;🥚&quot; | &quot;pond_bool&quot;  &nbsp; &nbsp; &nbsp; | &quot;🌊&quot; type&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (* Емодзі-стиль: 🌊 🦆 *) &nbsp; &nbsp; &nbsp; | &quot;raft&quot; type&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (* Текстовий стиль: raft duck64 *) &nbsp; &nbsp; &nbsp; | identЦе звучить природно для мови: структура даних називається flock (зграя), а масив — raft (пліт на воді).User prompt: поясни ці вимоги до імплементації масивів: Arrays a fixed-size array of a built-in type; index read and write; an index out of range on a constant is a compile error, on a value a run-time error that prints and exits; an array passed to a functionResponse: Ці вимоги деталізують, як саме має поводитися компілятор (семантичний аналіз та кодогенератор) при роботі з масивами.1. Фіксований розмір та вбудовані типи (Fixed-size array of a built-in type)Фіксований розмір (Fixed-size): Розмір масиву задається під час його створення і не може змінюватися під час виконання (немає методів push, pop чи динамічного розширення).Лише базові типи (Built-in type): Елементами масиву можуть бути лише примітивні типи Duck Lang (duck32, duck64, pond_bool). Створення масивів зі структур (flock) чи вкладених масивів не вимагається.2. Читання та запис за індексом (Index read and write)Синтаксис та AST мають підтримувати масив як у ролі R-value (читання), так і в ролі L-value (запис):Read (Читання): 🍃 x : 🦆 &lt;- arr[2]; — витягує значення з комірки пам'яті за індексом.Write (Запис): arr[2] &lt;- 42; — змінює вміст комірки пам'яті за індексом.3. Перевірка меж індексу (Bounds checking)Вимога поділяє перевірку виходу за межі масиву на два рівні:А. На етапі компіляції (Compile-time error)Якщо індекс є константним літералом (числом), семантичний аналізатор компілятора перевіряє його ще до генерації IR. Якщо індекс від'ємний або більший/рівний розміру масиву, компіляція переривається з помилкою.🍃 arr : 🌊 🦆 &lt;- 🌊 🦆[5];arr[10] &lt;- 42;&nbsp; # ПОМИЛКА КОМПІЛЯЦІЇ (10 &gt;= 5 відомо одразу)arr[-1] &lt;- 1; &nbsp; # ПОМИЛКА КОМПІЛЯЦІЇ (індекс &lt; 0)Б. Під час виконання (Runtime error)Якщо індекс є змінною або виразом, компілятор не може перевірити його статично. Тому в IR генерується динамічна перевірка:🍃 idx : 🐥 &lt;- 👂 🐥; # Введення з клавіатуриarr[idx] &lt;- 42;&nbsp; &nbsp; &nbsp; &nbsp; # Динамічний індексВ IR для цього вставляється перевірка умов idx &lt; 0 або idx &gt;= len. Якщо умова виконується, програма друкує помилку та завершує роботу:; Псевдокод IR перевірки%is_invalid = check_bounds(%idx, %len)br i1 %is_invalid, label %panic, label %continuepanic:&nbsp; &nbsp; call void @printf(&quot;Index out of bounds error!\n&quot;)&nbsp; &nbsp; call void @exit(i32 1)4. Передача масиву у функцію (An array passed to a function)Масиви можна передавати як аргументи у hatch-функції.Синтаксис типом-параметра: hatch sum(arr: 🌊 🦆) -&gt; 🦆Передача за посиланням (By reference): Оскільки розмір масиву може бути великим, у IR функція повинна приймати вказівник на дескриптор масиву (а не копіювати всі елементи масиву в стек). Зміни елементів всередині функції впливатимуть на оригінальний масив.hatch print_first(arr: 🌊 🦆) -&gt; 🦆 🪶&nbsp; &nbsp; lay arr[0];🪽User prompt: поясни це питанняResponse: Це опитування стосується проєктування вихідного коду вашого компілятора Duck Lang, а саме — де проводити межу між статичною перевіркою (на етапі компіляції) та динамічною (під час виконання).Детальний розбір варіантів із скриншоту1. Варіант 1 (Обраний та рекомендований): Літерали й арифметика лише з літералів (наприклад, 1 + 2)Як працює: Компілятор застосовує згортання констант (Constant Folding) під час обходу AST-дерева. Якщо вузол індексу містить лише числові літерали та арифметичні оператори (+, -, *, /), компілятор обчислює його значення ще до генерації IR.Приклад в Duck Lang:🍃 arr : 🌊 🦆 &lt;- 🌊 🦆[5];arr[1 + 2] &lt;- 10; &nbsp; # 1 + 2 обчислюється в 3 на етапі компіляції (3 &lt; 5 -&gt; OK)arr[10 - 2] &lt;- 10;&nbsp; # 10 - 2 = 8 (8 &gt;= 5 -&gt; Compile Error!)Чому це кращий вибір: Реалізується кількома рядками рекурсивного обчислення AST-вузла, але охоплює базову арифметику констант.2. Варіант 2: Тільки цілий числовий літералЯк працює: Компілятор перевіряє межі тільки якщо в дужках стоїть чистий літерал number (наприклад, arr[5]).Мінус: Запису на кшталт arr[2 + 3] буде надано статус динамічного виразу, і перевірка відкладеться на runtime (через IR-інструкцію icmp), хоча результат відомий заздалегідь.3. Варіант 3: Також імена незмінних змінних (Constant Propagation)Як працює: Якщо зміна оголошена як незмінна (🪨 / stone / rock) з константним значенням, компілятор відстежує її значення в таблиці символів (Symbol Table).🪨 SIZE : 🐥 &lt;- 5;🍃 arr : 🌊 🦆 &lt;- 🌊 🦆[SIZE];arr[SIZE] &lt;- 10; # Compile Error, бо SIZE відомий компіляторуМінус: Вимагає складнішої архітектури таблиці символів та аналізатора типів.Як імплементувати Варіант 1 у Python (Constant Folding)У вашому аналізаторі AST Duck Lang можна написати допоміжну функцію eval_constant_expr:def eval_constant_expr(node):&nbsp; &nbsp; &quot;&quot;&quot;&nbsp; &nbsp; Повертає int, якщо вираз можна обчислити під час компіляції, &nbsp; &nbsp; або None, якщо вираз залежить від змінних/runtime.&nbsp; &nbsp; &quot;&quot;&quot;&nbsp; &nbsp; if isinstance(node, NumberLiteralAST):&nbsp; &nbsp; &nbsp; &nbsp; return node.value&nbsp; &nbsp; elif isinstance(node, BinaryOpAST):&nbsp; &nbsp; &nbsp; &nbsp; left = eval_constant_expr(node.left)&nbsp; &nbsp; &nbsp; &nbsp; right = eval_constant_expr(node.right)&nbsp; &nbsp; &nbsp; &nbsp; if left is not None and right is not None:&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if node.op == '+': return left + right&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if node.op == '-': return left - right&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if node.op == '*': return left * right&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; if node.op == '/': return left // right&nbsp; &nbsp; return None&nbsp; # Повертає None для змінних чи read_exprПід час семантичного аналізу індексування:index_val = eval_constant_expr(array_access_ast.index_node)if index_val is not None:&nbsp; &nbsp; # 1. КОНСТАНТНИЙ ІНДЕКС -&gt; Перевіряємо прямо зараз&nbsp; &nbsp; if index_val &lt; 0 or index_val &gt;= array_size:&nbsp; &nbsp; &nbsp; &nbsp; raise CompileError(f&quot;Index {index_val} out of bounds for array of size {array_size}&quot;)else:&nbsp; &nbsp; # 2. ДИНАМІЧНИЙ ІНДЕКС -&gt; Генеруємо IR з перевіркою в Runtime (icmp / br)&nbsp; &nbsp; emit_runtime_bounds_check(builder, array_ast, index_ast)User prompt: поясни що він питаєResponse: Це опитування запитує, як саме функція (hatch) повинна приймати масив (raft) і перевіряти його розмір під час виклику.Оскільки у вимогах вказано, що масиви мають фіксований розмір, постає питання архітектури сигнатури функцій у Duck Lang.Суть кожного варіанта:1. Варіант 1: Розмір прив'язаний до параметра n (Залежна типізація)Синтаксис: hatch f(n: duck32, xs: raft&lt;duck32, n&gt;)Як працює: Розмір масиву xs явно вказується через сусідній параметр n. Під час виклику функції (наприклад, f(5, my_array)) компілятор або runtime перевіряє: &quot;Чи дійсно довжина my_array дорівнює 5?&quot;. Якщо так — передається копія масиву.Плюси/Мінуси: Забезпечує суворий контроль, але змушує завжди передавати розмір окремим аргументом.2. Варіант 2: Передача масиву будь-якої довжини (Гнучкіший підхід)Синтаксис: hatch f(xs: raft&lt;duck32&gt;)Як працює: Тип у сигнатурі функції вказує лише тип елементів (duck32), але не прив'язується до конкретного числа n. Функція може прийняти масив розміром і 5, і 10, і 100 елементів. Сама функція бере довжину з дескриптора масиву, копіює його і працює з ним.Плюси/Мінуси: Набагато зручніше для написання коду мовою Duck Lang, адже не потрібно дублювати розмір масиву в аргументах функції.3. Варіант 3: Поки не визначати поведінкуВідкласти реалізацію передачі масивів у функції на пізніші етапи розробки компілятора.Що краще обрати?Якщо ваша мета — простіша реалізація та гнучкість мови, зазвичай обирають Варіант 2, оскільки в IR дескриптор масиву { len, data* } вже містить у собі довжину len, і функції не потрібно явно передавати n окремим параметром.Якщо завдання/викладач вимагає суворого контролю параметрів за рекомендованим шаблоном — обирайте Варіант 1.User prompt: знову не розумію що означаж глобальніResponse: Це опитування запитує, чи дозволяти оголошувати масиви з динамічним розміром на глобальному рівні (поза функціями), а не лише всередині функцій.1. Різниця між локальним та глобальним масивомЛокальний масив (всередині функції):hatch main() -&gt; duck32 🪶&nbsp; &nbsp; 🍃 n : duck32 &lt;- 👂 duck32;&nbsp; &nbsp; 🍃 arr : raft duck32 &lt;- raft duck32[n]; # Локальний масив🪽Коли викликається функція main, генерується IR-код, який викликає malloc прямо під час виконання функції. Це зробити легко.Глобальний масив (на самому початку файлу, top_item):🍃 global_arr : raft duck32 &lt;- raft duck32[10]; # Глобальний масивhatch main() -&gt; duck32 🪶&nbsp; &nbsp; # Доступ до global_arr з будь-якого місця🪽2. У чому виникає технічна проблема в IR?В LLVM IR усі глобальні змінні (@global_var = global ...) мають бути визначені статично під час компіляції.Ви не можете написати в глобальному LLVM IR виклик функції malloc або змінну n, бо під час компіляції пам'ять у купі (Heap) ще не існує.Щоб підтримати глобальні масиви з динамічним розміром (runtime-sized), компілятору потрібно зробити &quot;хак&quot;:Створити глобальний вказівник у LLVM IR (ініціалізований null).Автоматично згенерувати приховану функцію ініціалізації (наприклад, @init_globals()), яка викликається на початку програми перед main().У цій прихованій функції викликати malloc і записати дескриптор масиву в глобальний вказівник.3. Пояснення варіантів у опитуванніВаріант 1: Підтримати глобальні й локальні (рекомендовано) Ви додаєте у свій компілятор генерування стартової функції ініціалізації для глобальних масивів. Масиви можна буде оголошувати де завгодно.Варіант 2: Дозволити runtime-sized rafts лише в локальних змінних Глобальними можна робити тільки звичайні числа чи булеві значення, а масиви дозволено створювати тільки всередині hatch-функцій. Це значно спрощує написання кодогенератора.Варіант 3: Спершу лишити глобальні поза підтримкою Тимчасово ігнорувати глобальні масиви й повернутися до них пізніше.Що краще обрати?Якщо хочете зробити компілятор простішим та швидшим у розробці — обирайте Варіант 2 (у більшості навчальних мов масиви роблять тільки локальними).Якщо хочете повну підтримку за стандартами проєкту — обирайте Варіант 1.User prompt: що тут просять: TASK 3 — THE REAL PROGRAM (4 POINTS) A program in your language that a person can use: it prints prompts, reads input, computes something and prints results. It uses at least one structure with a member function, at least one function, read and print, and your feature — visibly, not in a corner. What it does is up to you: a small game, a calculator over structures, a filter over values, a scheduler of tasks if you built threads or coroutines. - programs/NAME.txt — the program; a stranger can follow the prompts. - At least two recorded sessions: programs/NAME.in with what the user types and programs/NAME.expected with the exact output, prompts included. Your test script runs them. - The exact commands that turn the program into a native binary with llc and clang, in the README; lli is not the deliverable. - Ten lines in the README: what the program does, where it uses your feature, and the command that runs each session. Warning. Build Task 3 first, in the smallest form that runs, and grow it. A feature that no program uses is untested in the only way that matters here, and the program finds the bugs in the feature faster than the tests do.Response: У цьому завданні від вас вимагають створити повноцінну інтерактивну програму вашою мовою Duck Lang, яка демонструє роботу створеної вами фічі (масивів) та компілюється в нативний виконний файл.1. Вимоги до самої програмиВаша програма повинна бути корисною для звичайного користувача (наприклад: мінігра, калькулятор, фільтр даних чи менеджер задач) та обов'язково містити:Інтерактивність: виводити підказки для користувача (🔊), зчитувати введення з клавіатури (👂) та виводити результат.Структуру: принаймні один flock із внутрішнім методом.Функцію: принаймні одну окрему hatch-функцію.Головну фічу (Масиви): масиви мають активно та помітно використовуватися в основній логіці (а не просто про проформах у кутку коду).2. Що саме потрібно здати (Файли та артефакти)programs/NAME.txt — вихідний код вашої програми на Duck Lang (назва файлу замість NAME обирається вами, наприклад calculator.txt).Файли тестових сесій (мінімум 2 сесії):programs/NAME.in — текст, який користувач вводить під час роботи (inputs).programs/NAME.expected — точний очікуваний вивід програми (включаючи всі підказки та результати).Ваш тестовий скрипт має автоматично проганяти ці файли.Розділ у README (близько 10 рядків):Короткий опис того, що робить програма.Пояснення, де саме в коді використовується ваша фіча (масиви).Точні команди компіляції через llc та clang для створення нативного бінарника (використовувати lli як фінальний результат заборонено).Команди для запуску обох тестових сесій.3. Застереження (Warning)Починайте писати Завдання 3 одразу в найменшому робочому вигляді та поступово додавайте функціонал.Інтерактивна програма шукає помилки у вашому кодогенераторі IR та масивах значно швидше, ніж будь-які юніт-тести. Якщо фіча не використовується в реальній програмі, вважається, що вона не протестована.

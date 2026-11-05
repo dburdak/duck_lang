@@ -593,6 +593,69 @@ clang program.ll -o program
 
 `--ir input.txt` remains available as a legacy form that writes IR to standard output.
 
+### 🎯 Task 3: Interactive Raft Sum
+
+`programs/raft_sum.txt` asks for a positive count and then that many integers, stores them in a run-time-sized `raft`, and prints their sum. Its `sum_values` function walks the raft, while the `Tally` structure's mutating `add` member function maintains the running total. The two recorded sessions are `programs/raft_sum.in` (three values) and `programs/raft_sum_single.in` (one value); their exact expected output, including prompts, is in the matching `.expected` files.
+
+Build a native executable with LLVM's `llc` and `clang` (these commands keep generated files outside the repository):
+
+```bash
+python3 compiler.py programs/raft_sum.txt /tmp/raft_sum.ll
+llc -filetype=obj /tmp/raft_sum.ll -o /tmp/raft_sum.o
+clang /tmp/raft_sum.o -o /tmp/raft_sum
+```
+
+On macOS with Homebrew LLVM installed but `llc` not on `PATH`, use `/opt/homebrew/opt/llvm/bin/llc` in the second command.
+
+The ten-line program guide and recorded-session commands:
+1. The program asks how many integers the user wants to add.
+2. The count is read at run time and determines the raft's fixed length.
+3. Each integer is read into the next indexed raft element.
+4. `sum_values` receives the raft and its count, then iterates through all elements.
+5. `Tally.add` adds one value to the structure's running total.
+6. The program prints a `Total:` label followed by the computed sum.
+7. Session 1 supplies three values (`4`, `7`, `2`) and expects the total `13`.
+8. Session 1 command: `/tmp/raft_sum < programs/raft_sum.in`.
+9. Session 2 supplies one value (`42`) and expects the total `42`.
+10. Session 2 command: `/tmp/raft_sum < programs/raft_sum_single.in`.
+
+Add `--optimize` before the mode or paths to optimize the semantically checked AST before printing it or generating LLVM:
+
+```bash
+python3 compiler.py --optimize --ast path/to/program.txt
+python3 compiler.py --optimize --ir path/to/program.txt
+python3 compiler.py --optimize path/to/program.txt program.ll
+```
+
+### 🌱 AST Optimizer
+
+The optimizer runs before code generation and repeats its passes until none changes the tree:
+
+1. **Unused variables:** A declaration with no reads is removed, as are direct assignments to that variable. This is based on resolved variable symbols, so shadowed names in different scopes are handled separately. Calls, `read()`, and printing embedded in an inlined expression are preserved as expression statements. A runtime-sized raft declaration is kept when removing it could also remove a run-time size, allocation, or initializer check.
+2. **Unused functions:** Uncalled global functions and member functions are removed with their bodies. This repeats after each pass, so functions referenced only by a removed function are removed too.
+3. **Inlining:** A non-recursive, top-level function called exactly once is inlined when its body ends in one `lay expr;` and every preceding statement is a local declaration, assignment, function call, or print. Each parameter becomes a local initialized with its argument, and parameter/local names are given unique names. The inliner leaves member functions, recursive or multiply-called functions, and functions with `if`, `while`, nested blocks, `finish`, early exits, or raft declarations/parameters/results alone. In particular, a body that can leave through an exit inside an `if` is not inlined.
+
+The tests in `tests/optimize/` include two programs for each transformation. Each stores the expected optimized AST and output. The test script also checks that all end-to-end programs produce the same output, error output, and exit status with and without `--optimize`.
+
+**Builder-generated LLVM before inlining** (`inline_expression.txt`; relevant function and call):
+```llvm
+define i32 @"duck_fn_add_one"(i32 %"value")
+  ...
+  ret i32 %".6"
+}
+...
+%"add_one.result" = call i32 @"duck_fn_add_one"(i32 8)
+```
+
+**After inlining the single call** (the function and call are gone; its argument setup and checked addition are in `main`):
+```llvm
+%"__inline_add_one_1_value" = alloca i32
+...
+store i32 8, i32* %"__inline_add_one_1_value"
+%"__inline_add_one_1_value.value" = load i32, i32* %"__inline_add_one_1_value"
+%"checked" = call {i32, i1} @"llvm.sadd.with.overflow.i32"(i32 %"__inline_add_one_1_value.value", i32 1)
+```
+
 `hatch` is both the function-declaration keyword and a text synonym for the mutable-variable specifier `🍃`. At the top level, the parser treats `hatch ident (` as a function declaration; otherwise it parses `hatch` as a variable specifier.
 
 Functions are emitted with a `duck_fn_` prefix; member functions use `duck_method_<Struct>_<name>`. Structures are identified LLVM types, and fields use their declaration-order index for `getelementptr`. Runtime input and output use `scanf` and `printf`.
