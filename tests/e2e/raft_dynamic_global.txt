@@ -1,0 +1,8 @@
+🍃 count : duck32 <- 2;
+🍃 values : raft<duck32, count> <- [31, 47];
+hatch read_global () -> duck32 🪶
+    lay values[1];
+🪽
+count <- 1;
+🔊 read_global();
+finish 0;

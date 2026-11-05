@@ -1,0 +1,9 @@
+🍃 values : raft<duck32, 1> <- [1];
+hatch mutate_global (items : raft<duck32>) -> duck32 🪶
+    values[0] <- 9;
+    lay items[0];
+🪽
+🍃 result : duck32 <- mutate_global(values);
+🔊 result;
+🔊 values[0];
+finish 0;

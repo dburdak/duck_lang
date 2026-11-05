@@ -1,0 +1,6 @@
+hatch add_one (value : duck32) -> duck32 🪶
+    lay value + 1;
+🪽
+🍃 result : duck32 <- add_one(8);
+🔊 result;
+finish 0;

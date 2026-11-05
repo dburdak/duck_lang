@@ -1,0 +1,7 @@
+🍃 count : duck32 <- 2;
+🍃 first : raft<duck32, count> <- [1, 2];
+🍃 second : raft<duck32, count> <- [3, 4];
+first <- second;
+second[0] <- 9;
+🔊 first[0];
+finish 0;

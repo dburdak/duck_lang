@@ -1,0 +1,18 @@
+Program
+  Function twice -> 🐥
+    Parameter value 🐥
+    Block
+      Return
+        BinOp +
+          Var value
+          Const 1
+  Print
+    Call arguments=1 chain_ends_in_member_call=False
+      Var twice
+      Const 4
+  Print
+    Call arguments=1 chain_ends_in_member_call=False
+      Var twice
+      Const 5
+  Exit
+    Const 0

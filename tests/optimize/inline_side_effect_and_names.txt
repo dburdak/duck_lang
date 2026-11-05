@@ -1,0 +1,10 @@
+hatch show_and_add (value : duck32) -> duck32 🪶
+    🍃 result : duck32 <- value + 2;
+    🔊 result;
+    lay result + value;
+🪽
+🍃 result : duck32 <- 10;
+🍃 answer : duck32 <- show_and_add(result);
+🔊 result;
+🔊 answer;
+finish 0;

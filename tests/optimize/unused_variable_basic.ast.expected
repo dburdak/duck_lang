@@ -1,0 +1,7 @@
+Program
+  Decl visible 🐥 mut
+    Const 9
+  Print
+    Var visible
+  Exit
+    Const 0

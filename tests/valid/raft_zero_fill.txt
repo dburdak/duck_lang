@@ -1,0 +1,2 @@
+🍃 flags : raft<pond_bool, 2> <- [];
+finish 0;

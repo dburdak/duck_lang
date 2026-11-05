@@ -1,0 +1,8 @@
+hatch orphan () -> duck32 🪶
+    lay helper();
+🪽
+hatch helper () -> duck32 🪶
+    lay 12;
+🪽
+🔊 3;
+finish 0;

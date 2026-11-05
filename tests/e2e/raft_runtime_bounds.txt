@@ -1,0 +1,4 @@
+🍃 values : raft<duck32, 3> <- [11, 22, 33];
+🍃 index : duck32 <- 👂 duck32;
+🔊 values[index];
+finish 0;
